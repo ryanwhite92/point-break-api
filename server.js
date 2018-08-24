@@ -62,29 +62,32 @@ app.post("/register", (req, res) => {
   const lastName = req.body.last_name;
   const email = req.body.email.toLowerCase();
   const phoneNum = req.body.phone
-  const hashedPW = bcrypt.hashSync(req.body.password, 10);
+  const password = req.body.password
+  const hashedPW = bcrypt.hashSync(password, 10);
+  //check if email is registered
   knex.select('*').from('users').then((results) => {
     const stringified = JSON.stringify(results);
     const users = JSON.parse(stringified);
-    console.log("users:", users)
-    for (const user in users) {
-      console.log(user.email)
+    for (const user of users) {
       if (user.email === email) {
-        res.send("This email is already registered.")
+        res.end("This email is already registered.")
+        return;
       } 
     }
-    knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('id').then(function (id) {
-      console.log(id)
-      console.log("INSERTED");
-    });
-    
   })
-    
-  //knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW});
-
-  // req.session.user_id = 
-  //res.redirect('/');  
+  //create user if all forms are filled
+  if (firstName && lastName && email && phoneNum && password) {
+    knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('id').then((id) => {
+    console.log("Inserted id:", JSON.parse(id))
+    req.session.user_id = id;
+    res.redirect('/');
+    })
+  } else {
+    res.send("Fill out all the forms!")
+  }
 });
+    
+
 
 app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
