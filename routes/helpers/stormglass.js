@@ -1,10 +1,7 @@
 require('es6-promise').polyfill();
 require('isomorphic-fetch');
 
-const ENV         = process.env.ENV || "development";
-const knexConfig  = require("../../knexfile");
-const knex        = require("knex")(knexConfig[ENV]);
-const sgApiKey    = process.env.SG_KEY
+const sgApiKey = process.env.SG_KEY;
 
 // Returns surf data from stormglass API based on input coordinates
 function getSurfData(latitude, longitude) {
@@ -19,8 +16,9 @@ function getSurfData(latitude, longitude) {
     }
   }).then(function(response) {
     return response.json();
-  }).then(function(report) {
-    console.log(report);
+  }).then(function(surfStatus) {
+    console.log(surfStatus);
+    return surfStatus;
   }).catch((error) => console.error(error));
 }
 

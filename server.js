@@ -50,7 +50,6 @@ app.get("/", (req, res) => {
       const latitude = result.latitude;
       const longitude = result.longitude;
       const surfStatus = stormglass.getSurfData(latitude, longitude)
-    .catch((error) => console.error(error));
 
       res.render("index");
     })
