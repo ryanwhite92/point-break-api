@@ -13,7 +13,8 @@ const knexConfig  = require("./knexfile");
 const knex        = require("knex")(knexConfig[ENV]);
 const morgan      = require('morgan');
 const knexLogger  = require('knex-logger');
-
+const cookieSession = require('cookie-session');
+const bcrypt = require('bcryptjs');
 // Seperated Routes for each Resource
 const usersRoutes = require("./routes/users");
 
@@ -38,9 +39,51 @@ app.use(express.static("public"));
 // Mount all resource routes
 app.use("/api/users", usersRoutes(knex));
 
+app.use(cookieSession({
+  name: 'session',
+  keys: ['secret-string', 'key2'],
+}));
+
 // Home page
 app.get("/", (req, res) => {
   res.render("index");
+});
+
+
+
+app.get("/register", (req,res) => {
+    res.render("registration")
+});
+
+
+app.post("/register", (req, res) => {
+  console.log(req.body);
+  const firstName = req.body.first_name;
+  const lastName = req.body.last_name;
+  const email = req.body.email.toLowerCase();
+  const phoneNum = req.body.phone
+  const hashedPW = bcrypt.hashSync(req.body.password, 10);
+  knex.select('*').from('users').then((results) => {
+    const stringified = JSON.stringify(results);
+    const users = JSON.parse(stringified);
+    console.log("users:", users)
+    for (const user in users) {
+      console.log(user.email)
+      if (user.email === email) {
+        res.send("This email is already registered.")
+      } 
+    }
+    knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('id').then(function (id) {
+      console.log(id)
+      console.log("INSERTED");
+    });
+    
+  })
+    
+  //knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW});
+
+  // req.session.user_id = 
+  //res.redirect('/');  
 });
 
 app.listen(PORT, () => {
