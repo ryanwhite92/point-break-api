@@ -2,9 +2,10 @@ exports.seed = function(knex, Promise) {
   return knex('users').del()
     .then(function () {
       return Promise.all([
-        knex('users').insert({id: 1, name: 'Alice'}),
-        knex('users').insert({id: 2, name: 'Bob'}),
-        knex('users').insert({id: 3, name: 'Charlie'})
+        knex('users').insert({id: 1, first_name: 'Alice', last_name: 'Smith', password: 'abcdef', email: 'alice@gmail.com', phone_number: '1234567'}),
+        knex('users').insert({id: 2, first_name: 'Bob', last_name: 'Jones', password: 'abcdef', email: 'bob@gmail.com', phone_number: '2234367'}),
+        knex('users').insert({id: 3, first_name: 'Charlie', last_name: 'Harris', password: 'abcdef', email: 'charlie@gmail.com', phone_number: '3334567'})
       ]);
     });
 };
+
