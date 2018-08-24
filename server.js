@@ -43,15 +43,40 @@ app.use("/api/users", usersRoutes(knex));
 
 // Home page
 app.get("/", (req, res) => {
+  const surfReport = [];
+
   knex("beaches")
     .select("*")
     .then((results) => {
-      let result = results[0];
-      const latitude = result.latitude;
-      const longitude = result.longitude;
-      const surfStatus = stormglass.getSurfData(latitude, longitude)
+      results.forEach((result) => {
+        const updateInterval = 60 * 60 * 24 * 1000; // daily update interval in ms
+        const beachReport = {
+          name: result.name,
+          latitude: result.latitude,
+          longitude: result.longitude,
+          stormglass: result.stormglass
+        };
+        surfReport.push(beachReport);
 
-      res.render("index");
+        if (!result.updated_at || Date.now() - Date.parse(result.updated_at) > updateInterval) {
+          stormglass.getSurfData(result).then((data) => {
+            console.log("main data:", data);
+            data = JSON.stringify(data);
+
+            knex("beaches")
+              .where({id: result.id})
+              .update({
+                stormglass: data,
+                updated_at: new Date()
+              })
+              .catch(error => console.error(error));
+
+          }).catch(error => console.error(error));
+        }
+      });
+
+      console.log(surfReport);
+      res.render("index", { surfReport });
     })
     .catch((error) => console.error(error));
 
