@@ -74,17 +74,18 @@ app.post("/register", (req, res) => {
         return;
       } 
     }
+      //create user if all forms are filled
+    if (firstName && lastName && email && phoneNum && password) {
+      knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('id').then((id) => {
+      console.log("Inserted id:", JSON.parse(id))
+      req.session.user_id = id;
+      res.redirect('/');
+      })
+    } else {
+      res.send("Fill out all the forms!")
+    }
   })
-  //create user if all forms are filled
-  if (firstName && lastName && email && phoneNum && password) {
-    knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('id').then((id) => {
-    console.log("Inserted id:", JSON.parse(id))
-    req.session.user_id = id;
-    res.redirect('/');
-    })
-  } else {
-    res.send("Fill out all the forms!")
-  }
+
 });
     
 
