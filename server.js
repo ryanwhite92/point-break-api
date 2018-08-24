@@ -41,45 +41,60 @@ app.use(express.static("public"));
 // Mount all resource routes
 app.use("/api/users", usersRoutes(knex));
 
+function updateDatabase(result) {
+  const updateInterval = 60 * 60 * 24 * 1000; // daily update interval in ms
+
+    stormglass.getSurfData(result)
+      .then((data) => {
+        console.log("main data:", data);
+        data = JSON.stringify(data);
+        result.stormglass = data;
+        result.updated_at = new Date;
+        console.log("RESULT", result)
+
+        knex("beaches")
+          .where({id: result.id})
+          .update({
+            stormglass: data,
+            updated_at: new Date()
+          })
+          .catch(error => console.error(error));
+
+      })
+      .catch(error => console.error(error));
+}
+
 // Home page
 app.get("/", (req, res) => {
+  const updateInterval = 60 * 60 * 24 * 1000; // daily update interval in ms
+  let updated = false;
   const surfReport = [];
 
   knex("beaches")
     .select("*")
     .then((results) => {
       results.forEach((result) => {
-        const updateInterval = 60 * 60 * 24 * 1000; // daily update interval in ms
-        const beachReport = {
-          name: result.name,
-          latitude: result.latitude,
-          longitude: result.longitude,
-          stormglass: result.stormglass
-        };
-        surfReport.push(beachReport);
-
         if (!result.updated_at || Date.now() - Date.parse(result.updated_at) > updateInterval) {
-          stormglass.getSurfData(result).then((data) => {
-            console.log("main data:", data);
-            data = JSON.stringify(data);
-
-            knex("beaches")
-              .where({id: result.id})
-              .update({
-                stormglass: data,
-                updated_at: new Date()
-              })
-              .catch(error => console.error(error));
-
-          }).catch(error => console.error(error));
+          updated = true;
+          updateDatabase(result);
         }
       });
 
-      console.log(surfReport);
-      res.render("index", { surfReport });
+      // If data needs to be updated, set timeout to wait for database to update (temp solution)
+      if(updated) {
+        setTimeout(() => {
+          knex("beaches")
+            .select("*")
+            .then((results) => {
+              res.render("index", { surfReport: results });
+            })
+            .catch(error => console.error(error));
+        }, 2000);
+      } else {
+        res.render("index", { surfReport: results });
+      }
     })
     .catch((error) => console.error(error));
-
 });
 
 app.listen(PORT, () => {
