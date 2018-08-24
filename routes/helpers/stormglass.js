@@ -25,9 +25,13 @@ async function getSurfData(beach) {
 function buildSurfReport(data) {
   const weeklyReport = [];
   const reports = data.hours.filter((status) => status.time.includes("T00"));
+  const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   reports.forEach((report) => {
+    const weekday = weekdays[new Date(report.time).getDay()];
+
     const status = {
+      weekday,
       swellHeight: report.swellHeight[0].value,
       waveHeight: report.waveHeight[0].value
     };
