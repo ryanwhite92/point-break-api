@@ -14,6 +14,9 @@ const knex        = require("knex")(knexConfig[ENV]);
 const morgan      = require('morgan');
 const knexLogger  = require('knex-logger');
 
+// Loads the stormglass api helper
+const stormglass = require('./routes/helpers/stormglass');
+
 // Seperated Routes for each Resource
 const usersRoutes = require("./routes/users");
 
@@ -40,7 +43,19 @@ app.use("/api/users", usersRoutes(knex));
 
 // Home page
 app.get("/", (req, res) => {
-  res.render("index");
+  knex("beaches")
+    .select("*")
+    .then((results) => {
+      let result = results[0];
+      const latitude = result.latitude;
+      const longitude = result.longitude;
+      const surfStatus = stormglass.getSurfData(latitude, longitude)
+    .catch((error) => console.error(error));
+
+      res.render("index");
+    })
+    .catch((error) => console.error(error));
+
 });
 
 app.listen(PORT, () => {
