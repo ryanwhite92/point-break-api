@@ -42,26 +42,24 @@ app.use(express.static("public"));
 app.use("/api/users", usersRoutes(knex));
 
 function updateDatabase(result) {
-  const updateInterval = 60 * 60 * 24 * 1000; // daily update interval in ms
+  stormglass.getSurfData(result)
+    .then((data) => {
+      console.log("main data:", data);
+      data = JSON.stringify(data);
+      result.stormglass = data;
+      result.updated_at = new Date;
+      console.log("RESULT", result)
 
-    stormglass.getSurfData(result)
-      .then((data) => {
-        console.log("main data:", data);
-        data = JSON.stringify(data);
-        result.stormglass = data;
-        result.updated_at = new Date;
-        console.log("RESULT", result)
+      knex("beaches")
+        .where({id: result.id})
+        .update({
+          stormglass: data,
+          updated_at: new Date()
+        })
+        .catch(error => console.error(error));
 
-        knex("beaches")
-          .where({id: result.id})
-          .update({
-            stormglass: data,
-            updated_at: new Date()
-          })
-          .catch(error => console.error(error));
-
-      })
-      .catch(error => console.error(error));
+    })
+    .catch(error => console.error(error));
 }
 
 // Home page
@@ -74,13 +72,15 @@ app.get("/", (req, res) => {
     .select("*")
     .then((results) => {
       results.forEach((result) => {
-        if (!result.updated_at || Date.now() - Date.parse(result.updated_at) > updateInterval) {
+        const timeSinceUpdate = Date.now() - Date.parse(result.updated_at);
+
+        if (!result.updated_at || timeSinceUpdate > updateInterval) {
           updated = true;
           updateDatabase(result);
         }
       });
 
-      // If data needs to be updated, set timeout to wait for database to update (temp solution)
+      // If data was updated set timeout to wait 2s for database to update (temp solution)
       if(updated) {
         setTimeout(() => {
           knex("beaches")
