@@ -22,9 +22,35 @@
       <nav class="navbar" style="width: 100%; position: fixed;">
         <h2>SurfBuddy</h2>
       </nav>
-    </div>    
- 
+    </div>
+
     <div id="map"></div>
+
+    <div id="surf-reports">
+      <% surfReport.forEach(function(beach) { %>
+        <div>
+          <table class="beach-info">
+            <tr>
+              <th><%= beach.name %></th>
+              <% beach.stormglass.forEach((report) => { %>
+                <th><%= report.weekday %></th>
+              <% }) %>
+            </tr>
+            <tr>
+              <td>Latitude: <%= beach.latitude %></td>
+              <% beach.stormglass.forEach((report) => { %>
+                <td>WaveHeight: <%= report.waveHeight %></td>
+              <% }) %>
+            </tr>
+            <tr>
+              <td>Longitude: <%= beach.longitude %></td>
+              <% beach.stormglass.forEach((report) => { %>
+                <td>SwellHeight: <%= report.swellHeight %></td>
+              <% }) %>
+            </tr>
+          </table>
+      <% }) %>
+    </div>
 
     <script>
       var map;
@@ -37,7 +63,7 @@
       }
 
         map = new google.maps.Map(document.getElementById('map'), mapOptions);
-      
+
         var marker = new google.maps.Marker({
           position: jordanRiver,
           map: map,
