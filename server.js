@@ -13,10 +13,17 @@ const knexConfig  = require("./knexfile");
 const knex        = require("knex")(knexConfig[ENV]);
 const morgan      = require('morgan');
 const knexLogger  = require('knex-logger');
+
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+
+
+// Loads the stormglass api helper
+const stormglass = require('./routes/helpers/stormglass');
+
 // Seperated Routes for each Resource
 const usersRoutes = require("./routes/users");
+const beachRoutes = require("./routes/beaches");
 
 // Load the logger first so all (static) HTTP requests are logged to STDOUT
 // 'dev' = Concise output colored by response status for development use.
@@ -38,6 +45,36 @@ app.use(express.static("public"));
 
 // Mount all resource routes
 app.use("/api/users", usersRoutes(knex));
+app.use("/api/beaches", beachRoutes(knex));
+
+function updateSurfData() {
+  knex("beaches")
+    .select("*")
+    .then((results) => {
+      results.forEach((result) => {
+        stormglass.getSurfData(result)
+          .then((data) => {
+            data = JSON.stringify(data);
+            updateDatabase(result, data);
+          })
+          .catch(error => console.error(error));
+      });
+    })
+    .catch(error => console.error(error));
+}
+
+function updateDatabase(result, data) {
+  knex("beaches")
+    .where({ id: result.id })
+    .update({
+      stormglass: data,
+      updated_at: new Date()
+    })
+    .catch(error => console.error(error));
+}
+
+// Update surf data every 1/2 day (in ms)
+setInterval(updateSurfData, 43200000);
 
 app.use(cookieSession({
   name: 'session',
@@ -46,7 +83,8 @@ app.use(cookieSession({
 
 // Home page
 app.get("/", (req, res) => {
-  res.render("index");
+  // Uncomment below to update database
+  // updateSurfData();
 });
 
 
@@ -120,8 +158,6 @@ app.post("/logout", (req, res) => {
   req.session.user_id = null;
   res.redirect("/");
 });
-
-
 
 
 app.listen(PORT, () => {
