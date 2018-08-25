@@ -6,7 +6,8 @@ exports.up = function(knex, Promise) {
     table.decimal('longitude');
     table.decimal('latitude');
     table.json('stormglass');
-    table.timestamps();
+    table.timestamp('created_at').defaultTo(knex.fn.now());
+    table.timestamp('updated_at').defaultTo(knex.fn.now());
   });
 };
 
