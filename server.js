@@ -19,6 +19,7 @@ const stormglass = require('./routes/helpers/stormglass');
 
 // Seperated Routes for each Resource
 const usersRoutes = require("./routes/users");
+const beachRoutes = require("./routes/beaches");
 
 // Load the logger first so all (static) HTTP requests are logged to STDOUT
 // 'dev' = Concise output colored by response status for development use.
@@ -40,61 +41,41 @@ app.use(express.static("public"));
 
 // Mount all resource routes
 app.use("/api/users", usersRoutes(knex));
+app.use("/api/beaches", beachRoutes(knex));
 
-function updateDatabase(result) {
-  stormglass.getSurfData(result)
-    .then((data) => {
-      console.log("main data:", data);
-      data = JSON.stringify(data);
-      result.stormglass = data;
-      result.updated_at = new Date;
-      console.log("RESULT", result)
-
-      knex("beaches")
-        .where({id: result.id})
-        .update({
-          stormglass: data,
-          updated_at: new Date()
-        })
-        .catch(error => console.error(error));
-
-    })
-    .catch(error => console.error(error));
-}
-
-// Home page
-app.get("/", (req, res) => {
-  const updateInterval = 60 * 60 * 24 * 1000; // daily update interval in ms
-  let updated = false;
-  const surfReport = [];
-
+function updateSurfData() {
   knex("beaches")
     .select("*")
     .then((results) => {
       results.forEach((result) => {
-        const timeSinceUpdate = Date.now() - Date.parse(result.updated_at);
-
-        if (!result.updated_at || timeSinceUpdate > updateInterval) {
-          updated = true;
-          updateDatabase(result);
-        }
+        stormglass.getSurfData(result)
+          .then((data) => {
+            data = JSON.stringify(data);
+            updateDatabase(result, data);
+          })
+          .catch(error => console.error(error));
       });
-
-      // If data was updated set timeout to wait 2s for database to update (temp solution)
-      if(updated) {
-        setTimeout(() => {
-          knex("beaches")
-            .select("*")
-            .then((results) => {
-              res.render("index", { surfReport: results });
-            })
-            .catch(error => console.error(error));
-        }, 2000);
-      } else {
-        res.render("index", { surfReport: results });
-      }
     })
-    .catch((error) => console.error(error));
+    .catch(error => console.error(error));
+}
+
+function updateDatabase(result, data) {
+  knex("beaches")
+    .where({ id: result.id })
+    .update({
+      stormglass: data,
+      updated_at: new Date()
+    })
+    .catch(error => console.error(error));
+}
+
+// Update surf data every 1/2 day (in ms)
+setInterval(updateSurfData, 43200000);
+
+// Home page
+app.get("/", (req, res) => {
+  // Uncomment below to update database
+  // updateSurfData();
 });
 
 app.listen(PORT, () => {
