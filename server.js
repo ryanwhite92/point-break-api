@@ -51,12 +51,13 @@ app.get("/", (req, res) => {
 
 
 
-app.get("/register", (req,res) => {
+app.get("/register", (req, res) => {
     res.render("registration")
 });
 
 
 app.post("/register", (req, res) => {
+  //res.json(req.body)
   console.log(req.body);
   const firstName = req.body.first_name;
   const lastName = req.body.last_name;
@@ -66,6 +67,7 @@ app.post("/register", (req, res) => {
   const hashedPW = bcrypt.hashSync(password, 10);
   //check if email is registered
   knex.select('*').from('users').then((results) => {
+    //res.json(results);
     const stringified = JSON.stringify(results);
     const users = JSON.parse(stringified);
     for (const user of users) {
@@ -74,22 +76,56 @@ app.post("/register", (req, res) => {
         return;
       } 
     }
-      //create user if all forms are filled
+    //create user if all forms are filled
     if (firstName && lastName && email && phoneNum && password) {
       knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('id').then((id) => {
       console.log("Inserted id:", JSON.parse(id))
-      req.session.user_id = id;
+      req.session.user_id = JSON.parse(id);
       res.redirect('/');
       })
     } else {
       res.send("Fill out all the forms!")
     }
   })
-
 });
     
+
+app.get("/login", (req, res) => {
+  res.render("login");
+});
+
+app.post("/login", (req, res) => {
+  console.log("body", req.body)
+  const email = req.body.email.toLowerCase();
+  const password = req.body.password;
+  if (email) {
+    knex('users').select('id', 'password').where({email: email}).returning('password').then((results) => {
+      const stringified = JSON.stringify(results);
+      const userInfo = JSON.parse(stringified);
+      if (bcrypt.compareSync(password, userInfo[0].password)) {
+        req.session.user_id = userInfo[0].id;
+        res.redirect("/");
+        return;
+      } else {
+        res.send("Wrong password")
+      }
+    })
+  } else {
+    res.redirect("/register")
+  }
+
+});
+
+app.post("/logout", (req, res) => {
+  req.session.user_id = null;
+  res.redirect("/");
+});
+
+
 
 
 app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
 });
+
+
