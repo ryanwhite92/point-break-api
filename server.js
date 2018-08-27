@@ -115,13 +115,13 @@ app.post("/register", (req, res) => {
       knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('id').then((id) => {
       console.log("Inserted id:", JSON.parse(id))
       req.session.user_id = JSON.parse(id);
+      res.json(id);
       })
     } else {
       res.send("Fill out all the forms!")
     }
   })
 });
-    
 
 app.get("/login", (req, res) => {
 
