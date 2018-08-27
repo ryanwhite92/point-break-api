@@ -83,8 +83,7 @@ app.use(cookieSession({
 
 // Home page
 app.get("/", (req, res) => {
-  // Uncomment below to update database
-  // updateSurfData();
+
 });
 
 app.get("/register", (req, res) => {
@@ -108,7 +107,7 @@ app.post("/register", (req, res) => {
       if (user.email === email) {
         res.end("This email is already registered.")
         return;
-      } 
+      }
     }
     //create user if all forms are filled
     if (firstName && lastName && email && phoneNum && password) {
@@ -156,6 +155,9 @@ app.post("/logout", (req, res) => {
 
 app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
+  console.log("Updating surf data...");
+  // Uncomment below to update database
+  updateSurfData();
 });
 
 
