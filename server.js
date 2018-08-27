@@ -19,7 +19,8 @@ const bcrypt = require('bcryptjs');
 
 
 // Loads the stormglass api helper
-const stormglass = require('./routes/helpers/stormglass');
+const stormglass   = require('./routes/helpers/stormglass');
+const notification = require('./routes/helpers/notification');
 
 // Seperated Routes for each Resource
 const usersRoutes = require("./routes/users");
@@ -157,7 +158,8 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  updateSurfData();
+  // updateSurfData();
+  // notification.sendSMS('+1(yourPhoneNumber)', 'Sombrio Beach');
 });
 
 
