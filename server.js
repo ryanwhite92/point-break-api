@@ -87,12 +87,8 @@ app.get("/", (req, res) => {
   // updateSurfData();
 });
 
-
-
 app.get("/register", (req, res) => {
-    res.render("registration")
 });
-
 
 app.post("/register", (req, res) => {
   //res.json(req.body)
@@ -119,7 +115,6 @@ app.post("/register", (req, res) => {
       knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('id').then((id) => {
       console.log("Inserted id:", JSON.parse(id))
       req.session.user_id = JSON.parse(id);
-      res.redirect('/');
       })
     } else {
       res.send("Fill out all the forms!")
@@ -129,7 +124,7 @@ app.post("/register", (req, res) => {
     
 
 app.get("/login", (req, res) => {
-  res.render("login");
+
 });
 
 app.post("/login", (req, res) => {
@@ -142,21 +137,20 @@ app.post("/login", (req, res) => {
       const userInfo = JSON.parse(stringified);
       if (bcrypt.compareSync(password, userInfo[0].password)) {
         req.session.user_id = userInfo[0].id;
-        res.redirect("/");
+        res.sendStatus(200);
         return;
       } else {
         res.send("Wrong password")
       }
     })
   } else {
-    res.redirect("/register")
+    res.sendStatus(404);
   }
 
 });
 
 app.post("/logout", (req, res) => {
   req.session.user_id = null;
-  res.redirect("/");
 });
 
 
