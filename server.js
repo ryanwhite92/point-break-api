@@ -74,6 +74,25 @@ function updateDatabase(result, data) {
     .catch(error => console.error(error));
 }
 
+function prepareUserNotifications() {
+  knex("beaches")
+    .join("favorites", "beaches.id", "favorites.beach_id")
+    .join("users", "users.id", "favorites.user_id")
+    .select()
+    .then((results) => {
+      results.forEach((result) => {
+        const { email, name, stormglass } = result;
+
+        // Update to send notification when surf report is good (once we have data model)
+        if (stormglass !== null) {
+          notification.sendEmail(email, name);
+          // notification.sendSMS('+1(yourPhoneNumber)', 'Sombrio Beach');
+        }
+      })
+    })
+    .catch(error => console.error(error));
+}
+
 // Update surf data every 1/2 day (in ms)
 setInterval(updateSurfData, 43200000);
 
@@ -159,7 +178,7 @@ app.listen(PORT, () => {
   console.log("Updating surf data...");
   // Uncomment below to update database
   // updateSurfData();
-  // notification.sendSMS('+1(yourPhoneNumber)', 'Sombrio Beach');
+  prepareUserNotifications();
 });
 
 
