@@ -7,7 +7,7 @@ const sgApiKey = process.env.SG_KEY;
 async function getSurfData(beach) {
   const latitude = Number(beach.latitude);
   const longitude = Number(beach.longitude);
-  const params = 'swellHeight,waveHeight';
+  const params = 'waveHeight,swellHeight,wavePeriod,windSpeed,windDirection';
   let range = new Date();
   range.setDate(range.getDate() + 4);
   const end = Date.parse(range) / 1000;
@@ -28,16 +28,26 @@ async function getSurfData(beach) {
 function buildSurfReport(data) {
   const weeklyReport = [];
   const reports = data.hours.filter((status) => status.time.includes("T00"));
-  const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   reports.forEach((report) => {
     const weekday = weekdays[new Date(report.time).getDay()];
+    const waveHeight = report.waveHeight[0].value;
+    const swellHeight = report.swellHeight[0].value;
+    const wavePeriod = report.wavePeriod[0].value;
+    const windSpeed = report.windSpeed.length > 0 ? report.windSpeed[0].value : 'no data';
+    const windDirection = report.windDirection.length > 0 ? report.windDirection[0].value : 'no data';
 
     const status = {
       weekday,
-      swellHeight: report.swellHeight[0].value,
-      waveHeight: report.waveHeight[0].value
+      waveHeight,
+      swellHeight,
+      wavePeriod,
+      windSpeed,
+      windDirection
     };
+
+    console.log(status);
     weeklyReport.push(status);
   });
 
