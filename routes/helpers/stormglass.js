@@ -7,7 +7,7 @@ const sgApiKey = process.env.SG_KEY;
 async function getSurfData(beach) {
   const latitude = Number(beach.latitude);
   const longitude = Number(beach.longitude);
-  const params = 'swellHeight,waveHeight';
+  const params = 'waveHeight,swellHeight,wavePeriod,windSpeed,windDirection';
   let range = new Date();
   range.setDate(range.getDate() + 4);
   const end = Date.parse(range) / 1000;
@@ -28,20 +28,47 @@ async function getSurfData(beach) {
 function buildSurfReport(data) {
   const weeklyReport = [];
   const reports = data.hours.filter((status) => status.time.includes("T00"));
-  const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   reports.forEach((report) => {
     const weekday = weekdays[new Date(report.time).getDay()];
+    const waveHeight = report.waveHeight[0].value;
+    const swellHeight = report.swellHeight[0].value;
+    const wavePeriod = report.wavePeriod[0].value;
+    const windDirection = report.windDirection.length > 0 ? report.windDirection[0].value: '--';
+
+    // Convert windSpeed from m/s to km/h (w/ 2 decimal places)
+    let windSpeed = report.windSpeed.length > 0 ? report.windSpeed[0].value : '--';
+    if (windSpeed !== '--') windSpeed = Math.round(windSpeed * 3.6 * 100) / 100;
 
     const status = {
       weekday,
-      swellHeight: report.swellHeight[0].value,
-      waveHeight: report.waveHeight[0].value
+      waveHeight,
+      swellHeight,
+      wavePeriod,
+      windSpeed,
+      windDirection
     };
+
+    status.surfRating = calcSurfRating(status);
+    console.log(status);
     weeklyReport.push(status);
   });
 
   return weeklyReport;
+}
+
+function calcSurfRating(beach) {
+  const { waveHeight, swellHeight, wavePeriod, windSpeed, windDirection } = beach;
+  let surfRating = 0;
+
+  if (waveHeight >= 1 && waveHeight <= 3) surfRating++;
+  if (swellHeight >= 0.5 && swellHeight <= 3) surfRating++;
+  if (wavePeriod >= 12) surfRating++;
+  if (windSpeed !== '--' && windSpeed <= 20) surfRating++;
+  if (windDirection !== '--' && windDirection >= 210 && windDirection <= 290) surfRating++;
+
+  return surfRating;
 }
 
 module.exports = { getSurfData };
