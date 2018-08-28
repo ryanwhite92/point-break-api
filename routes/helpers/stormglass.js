@@ -35,8 +35,11 @@ function buildSurfReport(data) {
     const waveHeight = report.waveHeight[0].value;
     const swellHeight = report.swellHeight[0].value;
     const wavePeriod = report.wavePeriod[0].value;
-    const windSpeed = report.windSpeed.length > 0 ? report.windSpeed[0].value : 'no data';
-    const windDirection = report.windDirection.length > 0 ? report.windDirection[0].value : 'no data';
+    const windDirection = report.windDirection.length > 0 ? report.windDirection[0].value: '--';
+
+    // Convert windSpeed from m/s to km/h (w/ 2 decimal places)
+    let windSpeed = report.windSpeed.length > 0 ? report.windSpeed[0].value : '--';
+    if (windSpeed !== '--') windSpeed = Math.round(windSpeed * 3.6 * 100) / 100;
 
     const status = {
       weekday,
@@ -47,11 +50,25 @@ function buildSurfReport(data) {
       windDirection
     };
 
+    status.surfRating = calcSurfRating(status);
     console.log(status);
     weeklyReport.push(status);
   });
 
   return weeklyReport;
+}
+
+function calcSurfRating(beach) {
+  const { waveHeight, swellHeight, wavePeriod, windSpeed, windDirection } = beach;
+  let surfRating = 0;
+
+  if (waveHeight >= 1 && waveHeight <= 3) surfRating++;
+  if (swellHeight >= 0.5 && swellHeight <= 3) surfRating++;
+  if (wavePeriod >= 12) surfRating++;
+  if (windSpeed !== '--' && windSpeed <= 20) surfRating++;
+  if (windDirection !== '--' && windDirection >= 210 && windDirection <= 290) surfRating++;
+
+  return surfRating;
 }
 
 module.exports = { getSurfData };
