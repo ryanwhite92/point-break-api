@@ -35,6 +35,7 @@ app.use(knexLogger(knex));
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json()); // handle json data
 app.use("/styles", sass({
   src: __dirname + "/styles",
   dest: __dirname + "/public/styles",
@@ -46,6 +47,12 @@ app.use(express.static("public"));
 // Mount all resource routes
 app.use("/api/users", usersRoutes(knex));
 app.use("/api/beaches", beachRoutes(knex));
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
 
 function updateSurfData() {
   knex("beaches")
@@ -87,18 +94,15 @@ app.get("/", (req, res) => {
   // updateSurfData();
 });
 
-app.get("/register", (req, res) => {
-});
-
 app.post("/register", (req, res) => {
-  //res.json(req.body)
-  console.log(req.body);
+  console.log("req.body:", req.body);
   const firstName = req.body.first_name;
   const lastName = req.body.last_name;
   const email = req.body.email.toLowerCase();
-  const phoneNum = req.body.phone
-  const password = req.body.password
+  const phoneNum = req.body.phone_number;
+  const password = req.body.password;
   const hashedPW = bcrypt.hashSync(password, 10);
+  const favBeaches = req.body.favBeaches
   //check if email is registered
   knex.select('*').from('users').then((results) => {
     //res.json(results);
@@ -106,7 +110,7 @@ app.post("/register", (req, res) => {
     const users = JSON.parse(stringified);
     for (const user of users) {
       if (user.email === email) {
-        res.end("This email is already registered.")
+        res.send("Already registered")
         return;
       } 
     }
@@ -115,11 +119,24 @@ app.post("/register", (req, res) => {
       knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('id').then((id) => {
       console.log("Inserted id:", JSON.parse(id))
       req.session.user_id = JSON.parse(id);
-      res.json(id);
+      const parsedId = JSON.parse(id)
+      if (favBeaches) {
+        favBeaches.forEach((beach) => {
+          knex('beaches').select('id').where({name: beach}).first().then((id) => {
+            const stringifiedId = JSON.stringify(id)
+            const beachId = JSON.parse(stringifiedId).id
+            knex('favorites').insert({user_id: parsedId, beach_id: beachId}).then(() => {
+              console.log("Added a fav beach.")
+            })
+          })
+        })
+      }
+      res.json(parsedId);
       })
     } else {
       res.send("Fill out all the forms!")
     }
+
   })
 });
 
