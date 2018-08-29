@@ -71,54 +71,6 @@ app.use((req, res, next) => {
   next();
 });
 
-function updateSurfData() {
-  knex("beaches")
-    .select("*")
-    .then((results) => {
-      results.forEach((result) => {
-        surfReport.buildSurfReport(result)
-          .then((data) => {
-            data = JSON.stringify(data);
-            updateDatabase(result, data);
-          })
-          .catch(error => console.error(error));
-      });
-    })
-    .catch(error => console.error(error));
-}
-
-function updateDatabase(result, data) {
-  knex("beaches")
-    .where({ id: result.id })
-    .update({
-      stormglass: data,
-      updated_at: new Date()
-    })
-    .catch(error => console.error(error));
-}
-
-function prepareUserNotifications() {
-  knex("beaches")
-    .join("favorites", "beaches.id", "favorites.beach_id")
-    .join("users", "users.id", "favorites.user_id")
-    .select()
-    .then((results) => {
-      results.forEach((result) => {
-        const { email, name, stormglass } = result;
-
-        for (let i = 0; i < stormglass.length; i++) {
-          // For now only sends one email if conditions are good on one of the forecast days
-          if (stormglass[i].surfRating >= 3) {
-            notification.sendEmail(email, name);
-            // notification.sendSMS('+1(yourPhoneNumber)', 'Sombrio Beach');
-            break;
-          }
-        }
-      });
-    })
-    .catch(error => console.error(error));
-}
-
 // Update surf data every 1/2 day (in ms)
 //setInterval(updateSurfData, 43200000);
 
@@ -227,8 +179,8 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  // updateSurfData();
-  prepareUserNotifications();
+  surfReport.updateSurfData(knex);
+  // notification.prepareUserNotifications(knex);
 });
 
 

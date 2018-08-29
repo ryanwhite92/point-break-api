@@ -84,4 +84,33 @@ async function buildSurfReport(beach) {
   return weeklyReport;
 }
 
-module.exports = { buildSurfReport };
+function updateSurfData(knex) {
+
+  function updateDatabase(result, data) {
+    knex("beaches")
+      .where({ id: result.id })
+      .update({
+        stormglass: data,
+        updated_at: new Date()
+      })
+      .catch(error => console.error(error));
+  }
+
+  knex("beaches")
+    .select("*")
+    .then((results) => {
+      results.forEach((result) => {
+        buildSurfReport(result)
+          .then((data) => {
+            data = JSON.stringify(data);
+
+            updateDatabase(result, data);
+
+          })
+          .catch(error => console.error(error));
+      });
+    })
+    .catch(error => console.error(error));
+}
+
+module.exports = { updateSurfData };
