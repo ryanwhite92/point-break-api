@@ -90,12 +90,15 @@ function prepareUserNotifications() {
       results.forEach((result) => {
         const { email, name, stormglass } = result;
 
-        // Update to send notification when surf report is good (once we have data model)
-        if (stormglass !== null) {
-          notification.sendEmail(email, name);
-          // notification.sendSMS('+1(yourPhoneNumber)', 'Sombrio Beach');
+        for (let i = 0; i < stormglass.length; i++) {
+          // For now only sends one email if conditions are good on one of the forecast days
+          if (stormglass[i].surfRating >= 3) {
+            notification.sendEmail(email, name);
+            // notification.sendSMS('+1(yourPhoneNumber)', 'Sombrio Beach');
+            break;
+          }
         }
-      })
+      });
     })
     .catch(error => console.error(error));
 }
@@ -194,7 +197,7 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  // updateSurfData();
+  updateSurfData();
   prepareUserNotifications();
 });
 
