@@ -16,15 +16,7 @@ const knexLogger  = require('knex-logger');
 
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
-// const session = require('express-session')
-// const cookieParser = require('cookie-parser');
-// app.use(cookieParser());
-// app.use(session({
-//   resave: false,
-//   saveUninitialized: true,
-//   secret: 'sdlfjljrowuroweu',
-//   cookie: { secure: false }
-// }));
+
 app.use(cookieSession({
   name: 'session',
   keys: 'osifwoviodans',
@@ -127,28 +119,30 @@ app.post("/register", (req, res) => {
     }
     //create user if all forms are filled
     if (firstName && lastName && email && phoneNum && password) {
-      knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('id').then((id) => {
-      console.log("Inserted id:", JSON.parse(id))
-      req.session.user_id = JSON.parse(id);
+      knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('*').then((results) => {
+      console.log(results)
+      const stringified = JSON.stringify(results)
+      const user = JSON.parse(stringified)
+      const userId = user[0].id;
+      req.session.user_id = userId;
       console.log("Session set:", req.session.user_id)
       req.session.save((err) => {
         if (!err) {
           console.log("SAVED IT!", req.session.user_id);
         }
       })
-      const parsedId = JSON.parse(id)
       if (favBeaches) {
         favBeaches.forEach((beach) => {
           knex('beaches').select('id').where({name: beach}).first().then((id) => {
             const stringifiedId = JSON.stringify(id)
             const beachId = JSON.parse(stringifiedId).id
-            knex('favorites').insert({user_id: parsedId, beach_id: beachId}).then(() => {
+            knex('favorites').insert({user_id: userId, beach_id: beachId}).then(() => {
               console.log("Added a fav beach.")
             })
           })
         })
       }
-      res.json(parsedId);
+      res.send(results);
       })
     } else {
       res.send("Fill out all the forms!")
