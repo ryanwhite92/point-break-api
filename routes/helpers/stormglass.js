@@ -46,10 +46,45 @@ async function buildSurfReport() {
 
   // const surfData = await getSurfData(beach);
   const weatherData = await getWeatherData();
+  const surfData = {
+    "hours": [
+      {
+        "time": "2018-08-29T07:00:00+00:00",
+        "swellHeight": [
+          {
+            "source": "smhi",
+            "value": 2.6
+          }
+        ],
+        "waveHeight": [
+          {
+            "source": "noaa",
+            "value": 2.1
+          },
+          {
+            "source": "meteo",
+            "value": 2.3
+          }
+        ],
+        "wavePeriod": [
+          {
+            "source": "noaa",
+            "value": 8.9
+          }
+        ]
+      }
+    ],
+    "meta": {
+      "dailyQuota": 5,
+      "lat": 58.7984,
+      "lng": 17.8081,
+      "requestCount": 2
+    }
+  };
 
   weatherData.forEach((dailyForecast) => {
     const dailyReport = {};
-    const timestamp = dailyForecast.time;
+    const timestamp = dailyForecast.time * 1000;
     const weatherIcon = dailyForecast.icon;
     const windDirection = dailyForecast.windBearing;
     const windSpeed = dailyForecast.windSpeed;
@@ -60,6 +95,18 @@ async function buildSurfReport() {
         windSpeed
     };
 
+    surfData.hours.forEach((hour) => {
+      const parsed = Date.parse(hour.time);
+      console.log(parsed);
+
+      if (dailyReport[parsed]) {
+        dailyReport[parsed].waveHeight = hour.waveHeight[0].value;
+        dailyReport[parsed].swellHeight = hour.swellHeight[0].value;
+        dailyReport[parsed].wavePeriod = hour.wavePeriod[0].value;
+      }
+    });
+
+    console.log(dailyReport);
     weeklyReport.push(dailyReport);
   });
 
