@@ -18,8 +18,8 @@ const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 
 
-// Loads the stormglass api helper
-const stormglass = require('./routes/helpers/stormglass');
+// Loads the surfReport helper
+const surfReport = require('./routes/helpers/surfReport');
 
 // Seperated Routes for each Resource
 const usersRoutes = require("./routes/users");
@@ -59,10 +59,10 @@ function updateSurfData() {
     .select("*")
     .then((results) => {
       results.forEach((result) => {
-        stormglass.buildSurfReport(result)
+        surfReport.buildSurfReport(result)
           .then((data) => {
             data = JSON.stringify(data);
-            // updateDatabase(result, data);
+            updateDatabase(result, data);
           })
           .catch(error => console.error(error));
       });
@@ -174,7 +174,7 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  updateSurfData();
+  // updateSurfData();
 });
 
 
