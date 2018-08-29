@@ -12,7 +12,7 @@ function sendSMS(data, timestamp) {
   const date = new Date(timestamp).toDateString();
 
   client.messages.create({
-    body: `Great surfing conditions at ${data.name}`,
+    body: `Great surfing conditions at ${data.name} on ${date}`,
     to: `${data.phone_number}`,
     from: `${twilioNumber}`
   })
@@ -39,13 +39,12 @@ function prepareUserNotifications(knex) {
   knex("beaches")
     .join("favorites", "beaches.id", "favorites.beach_id")
     .join("users", "users.id", "favorites.user_id")
-    .select()
+    .select("name", "stormglass", "email", "phone_number")
     .then((results) => {
       results.forEach((result) => {
         const { stormglass } = result;
 
-        // For now only sends one email if conditions are good on one of the forecast days
-        // per beach
+        // Send one email if conditions are good on one of the forecast days per beach
         for (let i = 0; i < stormglass.length; i++) {
           let dailyReport = stormglass[i];
           let notificationSent = false;
