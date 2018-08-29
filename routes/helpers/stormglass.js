@@ -9,11 +9,8 @@ async function getSurfData(beach) {
   const latitude = Number(beach.latitude);
   const longitude = Number(beach.longitude);
   const params = 'waveHeight,swellHeight,wavePeriod,windSpeed,windDirection';
-  let range = new Date();
-  range.setDate(range.getDate() + 4);
-  const end = Date.parse(range) / 1000;
 
-  const response = await fetch(`https://api.stormglass.io/point?lat=${latitude}&lng=${longitude}&params=${params}&end=${end}`, {
+  const response = await fetch(`https://api.stormglass.io/point?lat=${latitude}&lng=${longitude}&params=${params}`, {
     headers: {
       'Authorization': sgApiKey
     }
@@ -28,7 +25,7 @@ async function getWeatherData(beach) {
   const longitude = beach.longitude;
   const exclude = 'minutely,hourly,alerts,flags';
 
-  const darksky = await fetch(`https://api.darksky.net/forecast/${darkskyApiKey}/${latitude},${longitude}?exclude=${exclude}`);
+  const darksky = await fetch(`https://api.darksky.net/forecast/${darkskyApiKey}/${latitude},${longitude}?exclude=${exclude}&units=ca`);
   const forecast = await darksky.json();
   const dailyForecast = forecast.daily.data;
 
@@ -39,7 +36,6 @@ async function getWeatherData(beach) {
 // first index of each array in params variable above
 async function buildSurfReport(beach) {
   const weeklyReport = [];
-  // const reports = data.hours.filter((status) => status.time.includes("T00"));
   // const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   const weatherData = await getWeatherData(beach);
@@ -68,6 +64,8 @@ async function buildSurfReport(beach) {
       }
     });
 
+    dailyReport[timestamp].surfRating = calcSurfRating(dailyReport[timestamp]);
+
     console.log(dailyReport);
     weeklyReport.push(dailyReport);
   });
@@ -76,15 +74,15 @@ async function buildSurfReport(beach) {
   return weeklyReport;
 }
 
-function calcSurfRating(beach) {
-  const { waveHeight, swellHeight, wavePeriod, windSpeed, windDirection } = beach;
+function calcSurfRating(dailyReport) {
+  const { waveHeight, swellHeight, wavePeriod, windSpeed, windDirection } = dailyReport;
   let surfRating = 0;
 
-  if (waveHeight >= 1 && waveHeight <= 3) surfRating++;
-  if (swellHeight >= 0.5 && swellHeight <= 3) surfRating++;
-  if (wavePeriod >= 12) surfRating++;
-  if (windSpeed !== '--' && windSpeed <= 20) surfRating++;
-  if (windDirection !== '--' && windDirection >= 210 && windDirection <= 290) surfRating++;
+  if (waveHeight && waveHeight >= 1 && waveHeight <= 3) surfRating++;
+  if (swellHeight && swellHeight >= 0.5 && swellHeight <= 3) surfRating++;
+  if (wavePeriod && wavePeriod >= 12) surfRating++;
+  if (windSpeed && windSpeed <= 15) surfRating++;
+  if (windDirection && windDirection >= 210 && windDirection <= 290) surfRating++;
 
   return surfRating;
 }
