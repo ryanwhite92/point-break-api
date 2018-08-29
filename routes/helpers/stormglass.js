@@ -8,11 +8,8 @@ async function getSurfData(beach) {
   const latitude = Number(beach.latitude);
   const longitude = Number(beach.longitude);
   const params = 'waveHeight,swellHeight,wavePeriod,windSpeed,windDirection';
-  let range = new Date();
-  range.setDate(range.getDate() + 4);
-  const end = Date.parse(range) / 1000;
 
-  const response = await fetch(`https://api.stormglass.io/point?lat=${latitude}&lng=${longitude}&params=${params}&end=${end}`, {
+  const response = await fetch(`https://api.stormglass.io/point?lat=${latitude}&lng=${longitude}&params=${params}`, {
     headers: {
       'Authorization': sgApiKey
     }
