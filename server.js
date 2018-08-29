@@ -16,6 +16,7 @@ const knexLogger  = require('knex-logger');
 
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+const CronJob = require('cron').CronJob;
 // const session = require('express-session')
 // const cookieParser = require('cookie-parser');
 // app.use(cookieParser());
@@ -71,9 +72,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// Update surf data every 1/2 day (in ms)
-//setInterval(updateSurfData, 43200000);
+// Update surf data every at 7:59am before sending out notifications
+new CronJob('00 59 07 * * *', () => {
+  console.log('Updating surf data...');
+  surfReport.updateSurfData(knex);
+}, null, true, 'America/Los_Angeles');
 
+// Send daily notifications at 8am PST
+new CronJob('00 00 08 * * *', () => {
+  console.log('Sending daily notifications...');
+  notification.prepareUserNotifications(knex);
+}, null, true, 'America/Los_Angeles');
 
 // Home page
 app.get("/", (req, res) => {
@@ -179,8 +188,8 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  surfReport.updateSurfData(knex);
-  // notification.prepareUserNotifications(knex);
+  // surfReport.updateSurfData(knex);
+  notification.prepareUserNotifications(knex);
 });
 
 
