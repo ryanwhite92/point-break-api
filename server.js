@@ -23,8 +23,8 @@ app.use(cookieSession({
   signed: false
 }));
 
-// Loads the stormglass api helper
-const stormglass = require('./routes/helpers/stormglass');
+// Loads the surfReport helper
+const surfReport = require('./routes/helpers/surfReport');
 
 // Seperated Routes for each Resource
 const usersRoutes = require("./routes/users");
@@ -67,7 +67,7 @@ function updateSurfData() {
     .select("*")
     .then((results) => {
       results.forEach((result) => {
-        stormglass.getSurfData(result)
+        surfReport.buildSurfReport(result)
           .then((data) => {
             data = JSON.stringify(data);
             updateDatabase(result, data);
