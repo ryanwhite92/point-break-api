@@ -19,68 +19,31 @@ async function getSurfData(beach) {
     }
   });
   const json = await response.json();
-  const data = buildSurfReport(json);
 
-  return data;
+  return json;
 }
 
-async function getWeatherData() {
-  const latitude = 48.4206;
-  const longitude = -124.0557;
+async function getWeatherData(beach) {
+  const latitude = beach.latitude;
+  const longitude = beach.longitude;
   const exclude = 'minutely,hourly,alerts,flags';
 
   const darksky = await fetch(`https://api.darksky.net/forecast/${darkskyApiKey}/${latitude},${longitude}?exclude=${exclude}`);
   const forecast = await darksky.json();
   const dailyForecast = forecast.daily.data;
 
-  console.log(dailyForecast);
   return dailyForecast;
 }
 
 // Builds weekly surf report based on first entry of each day, using the values from the
 // first index of each array in params variable above
-async function buildSurfReport() {
+async function buildSurfReport(beach) {
   const weeklyReport = [];
   // const reports = data.hours.filter((status) => status.time.includes("T00"));
   // const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-  // const surfData = await getSurfData(beach);
-  const weatherData = await getWeatherData();
-  const surfData = {
-    "hours": [
-      {
-        "time": "2018-08-29T07:00:00+00:00",
-        "swellHeight": [
-          {
-            "source": "smhi",
-            "value": 2.6
-          }
-        ],
-        "waveHeight": [
-          {
-            "source": "noaa",
-            "value": 2.1
-          },
-          {
-            "source": "meteo",
-            "value": 2.3
-          }
-        ],
-        "wavePeriod": [
-          {
-            "source": "noaa",
-            "value": 8.9
-          }
-        ]
-      }
-    ],
-    "meta": {
-      "dailyQuota": 5,
-      "lat": 58.7984,
-      "lng": 17.8081,
-      "requestCount": 2
-    }
-  };
+  const weatherData = await getWeatherData(beach);
+  const surfData = await getSurfData(beach);
 
   weatherData.forEach((dailyForecast) => {
     const dailyReport = {};
@@ -97,7 +60,6 @@ async function buildSurfReport() {
 
     surfData.hours.forEach((hour) => {
       const parsed = Date.parse(hour.time);
-      console.log(parsed);
 
       if (dailyReport[parsed]) {
         dailyReport[parsed].waveHeight = hour.waveHeight[0].value;
@@ -127,4 +89,4 @@ function calcSurfRating(beach) {
   return surfRating;
 }
 
-module.exports = { getSurfData, getWeatherData, buildSurfReport };
+module.exports = { buildSurfReport };

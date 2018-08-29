@@ -59,10 +59,10 @@ function updateSurfData() {
     .select("*")
     .then((results) => {
       results.forEach((result) => {
-        stormglass.getSurfData(result)
+        stormglass.buildSurfReport(result)
           .then((data) => {
             data = JSON.stringify(data);
-            updateDatabase(result, data);
+            // updateDatabase(result, data);
           })
           .catch(error => console.error(error));
       });
