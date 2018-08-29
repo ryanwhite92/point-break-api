@@ -16,10 +16,23 @@ const knexLogger  = require('knex-logger');
 
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+// const session = require('express-session')
+// const cookieParser = require('cookie-parser');
+// app.use(cookieParser());
+// app.use(session({
+//   resave: false,
+//   saveUninitialized: true,
+//   secret: 'sdlfjljrowuroweu',
+//   cookie: { secure: false }
+// }));
+app.use(cookieSession({
+  name: 'session',
+  keys: 'osifwoviodans',
+  signed: false
+}));
 
-
-// Loads the stormglass api helper
-const stormglass   = require('./routes/helpers/stormglass');
+// Loads the surfReport helper
+const surfReport = require('./routes/helpers/surfReport');
 const notification = require('./routes/helpers/notification');
 
 // Seperated Routes for each Resource
@@ -43,14 +56,17 @@ app.use("/styles", sass({
   debug: true,
   outputStyle: 'expanded'
 }));
-app.use(express.static("public"));
+app.use(express.static(require('path').join(__dirname, 'public')));
+
 
 // Mount all resource routes
 app.use("/api/users", usersRoutes(knex));
 app.use("/api/beaches", beachRoutes(knex));
 
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.header("Access-Control-Allow-Headers", "Content-Type");
   next();
 });
@@ -60,7 +76,7 @@ function updateSurfData() {
     .select("*")
     .then((results) => {
       results.forEach((result) => {
-        stormglass.getSurfData(result)
+        surfReport.buildSurfReport(result)
           .then((data) => {
             data = JSON.stringify(data);
             updateDatabase(result, data);
@@ -104,16 +120,12 @@ function prepareUserNotifications() {
 }
 
 // Update surf data every 1/2 day (in ms)
-setInterval(updateSurfData, 43200000);
+//setInterval(updateSurfData, 43200000);
 
-app.use(cookieSession({
-  name: 'session',
-  keys: ['secret-string', 'key2'],
-}));
 
 // Home page
 app.get("/", (req, res) => {
-
+  console.log(req.session)
 });
 
 app.post("/register", (req, res) => {
@@ -141,6 +153,12 @@ app.post("/register", (req, res) => {
       knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('id').then((id) => {
       console.log("Inserted id:", JSON.parse(id))
       req.session.user_id = JSON.parse(id);
+      console.log("Session set:", req.session.user_id)
+      req.session.save((err) => {
+        if (!err) {
+          console.log("SAVED IT!", req.session.user_id);
+        }
+      })
       const parsedId = JSON.parse(id)
       if (favBeaches) {
         favBeaches.forEach((beach) => {
@@ -166,30 +184,42 @@ app.get("/login", (req, res) => {
 
 });
 
+app.get("/api/user", (req, res) => {
+  //res.send(req.session)
+  console.log(req.session)
+  knex('users').select('first_name', 'email').where({id: req.session.user_id}).then((results) => {
+    res.send(results)
+  })
+});
+
 app.post("/login", (req, res) => {
   console.log("body", req.body)
   const email = req.body.email.toLowerCase();
   const password = req.body.password;
   if (email) {
-    knex('users').select('id', 'password').where({email: email}).returning('password').then((results) => {
+    knex('users').select('*').where({email: email}).returning('password').then((results) => {
       const stringified = JSON.stringify(results);
       const userInfo = JSON.parse(stringified);
       if (bcrypt.compareSync(password, userInfo[0].password)) {
         req.session.user_id = userInfo[0].id;
-        res.sendStatus(200);
+        console.log('Session', req.session)
+        res.send(userInfo)
         return;
       } else {
         res.send("Wrong password")
       }
     })
   } else {
-    res.sendStatus(404);
+    res.send("No email");
   }
 
 });
 
 app.post("/logout", (req, res) => {
   req.session.user_id = null;
+  req.session = null;
+  res.send("Logged out")
+  console.log("Session:", req.session)
 });
 
 
@@ -197,7 +227,7 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  updateSurfData();
+  // updateSurfData();
   prepareUserNotifications();
 });
 
