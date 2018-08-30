@@ -3,6 +3,7 @@ require('isomorphic-fetch');
 
 const sgApiKey = process.env.SG_KEY;
 const darkskyApiKey = process.env.DARKSKY_KEY;
+const owmApiKey = process.env.OWM_KEY;
 
 // Returns surf data from stormglass API based on input coordinates
 async function getSurfData(beach) {
@@ -22,16 +23,18 @@ async function getSurfData(beach) {
   return json;
 }
 
-// Returns weather data from darksky API based on input coordinates
-async function getWeatherData(beach) {
-  const { latitude, longitude } = beach;
-  const exclude = 'minutely,hourly,alerts,flags';
+// Returns weather data from open weather network API based on input coordinates
+async function getWeatherData() {
+  // const { latitude, longitude } = beach;
+  const latitude = 48.42;
+  const longitude = -124.06;
 
-  const darksky = await fetch(`https://api.darksky.net/forecast/${darkskyApiKey}/${latitude},${longitude}?exclude=${exclude}&units=ca`);
-  const forecast = await darksky.json();
-  const dailyForecast = forecast.daily.data;
+  const owm = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${owmApiKey}`);
+  const forecast = await owm.json();
+  const weatherData = forecast.list;
+  console.log(weatherData);
 
-  return dailyForecast;
+  return weatherData;
 }
 
 function calcSurfRating(dailyReport) {
@@ -49,38 +52,38 @@ function calcSurfRating(dailyReport) {
 
 // Builds weekly surf report based on first entry of each day, using the values from the
 // first index of each array in params variable above
-async function buildSurfReport(beach) {
+async function buildSurfReport() {
   const weeklyReport = [];
-  const weatherData = await getWeatherData(beach);
-  const surfData = await getSurfData(beach);
+  const weatherData = await getWeatherData();
+  // const surfData = await getSurfData(beach);
 
-  weatherData.forEach((dailyForecast) => {
-    const dailyReport = {};
-    const timestamp = dailyForecast.time * 1000;
-    const weatherIcon = dailyForecast.icon;
-    const windDirection = dailyForecast.windBearing;
-    const windSpeed = dailyForecast.windSpeed;
+  weatherData.forEach((forecast) => {
+    const threeHourForecast = {};
+    const timestamp = forecast.dt * 1000;
+    const weatherIcon = forecast.weather[0].icon;
+    const windDirection = forecast.wind.deg;
+    const windSpeed = forecast.wind.speed;
 
-    dailyReport[timestamp] = {
+    threeHourForecast[timestamp] = {
         weatherIcon,
         windDirection,
         windSpeed
     };
 
-    surfData.hours.forEach((hour) => {
-      const parsed = Date.parse(hour.time);
+    // surfData.hours.forEach((hour) => {
+    //   const parsed = Date.parse(hour.time);
 
-      if (dailyReport[parsed]) {
-        dailyReport[parsed].waveHeight = hour.waveHeight[0].value;
-        dailyReport[parsed].swellHeight = hour.swellHeight[0].value;
-        dailyReport[parsed].wavePeriod = hour.wavePeriod[0].value;
-      }
-    });
+    //   if (threeHourForecast[parsed]) {
+    //     threeHourForecast[parsed].waveHeight = hour.waveHeight[0].value;
+    //     threeHourForecast[parsed].swellHeight = hour.swellHeight[0].value;
+    //     threeHourForecast[parsed].wavePeriod = hour.wavePeriod[0].value;
+    //   }
+    // });
 
-    dailyReport[timestamp].surfRating = calcSurfRating(dailyReport[timestamp]);
+    // threeHourForecast[timestamp].surfRating = calcSurfRating(threeHourForecast[timestamp]);
 
-    console.log(dailyReport);
-    weeklyReport.push(dailyReport);
+    console.log(threeHourForecast);
+    weeklyReport.push(threeHourForecast);
   });
 
   console.log(weeklyReport)
@@ -116,4 +119,4 @@ function updateSurfData(knex) {
     .catch(error => console.error(error));
 }
 
-module.exports = { updateSurfData };
+module.exports = { updateSurfData, buildSurfReport };
