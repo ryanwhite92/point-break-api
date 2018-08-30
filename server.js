@@ -150,8 +150,9 @@ app.get("/user/:id", (req, res) => {
   let userId = req.params.id;
   if (userId == req.session.user_id) {
     knex.select('name', 'beaches.id').from('beaches').innerJoin('favorites','beach_id', 'beaches.id')
-    .innerJoin('users', 'user_id', 'users.id').where({user_id: req.session.user_id})
+    .innerJoin('users', 'user_id', 'users.id').where({user_id: userId})
     .then((results) => {
+      console.log("Got user fav beaches:", results)
       res.json(results)
     }).catch((err) => console.log(err))
   } else {
@@ -187,19 +188,50 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/beach/delete", (req, res) => {
-  console.log(req.body)
-  knex('favorites').where({beach_id: req.body.id, user_id: req.body.userId}).del().then((res) => {
-    console.log(res)
+  console.log("Req body", req.body)
+  knex('favorites').where({beach_id: req.body.id, user_id: req.body.userId}).del().then((result) => {
+    console.log("Results: ", result)
+    res.sendStatus(200)
   })
 });
 
+app.post("/beach/add", (req, res) => {
+  const favBeaches = req.body.favBeaches
+  const userId = req.body.userId
+  knex.select('name', 'beaches.id').from('beaches').innerJoin('favorites','beach_id', 'beaches.id')
+    .innerJoin('users', 'user_id', 'users.id').where({user_id: userId})
+    .then((results) => {
+    const stringified = JSON.stringify(results)
+    const alreadyFav = JSON.parse(stringified)
+    for (const beach of favBeaches){
+      for (const b of alreadyFav) {
+        if (b.name === beach) {
+          res.send(`You already favorited ${b.name}`)
+          return;
+        }
+      }
+    } 
+    if (favBeaches) {
+        favBeaches.forEach((beach) => {
+          knex('beaches').select('id').where({name: beach}).first().then((id) => {
+            const stringifiedId = JSON.stringify(id)
+            const beachId = JSON.parse(stringifiedId).id
+            knex('favorites').insert({user_id: userId, beach_id: beachId}).then(() => {
+              res.send("Added a new beach")
+              console.log("Added a fav beach.")
+            })
+          })
+        })
+      }
+  }).catch((err) => console.log(err))
+})
 
 app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  // surfReport.updateSurfData(knex);
-  notification.prepareUserNotifications(knex);
+  //surfReport.updateSurfData(knex);
+  //notification.prepareUserNotifications(knex);
 });
 
 
