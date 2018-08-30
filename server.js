@@ -108,7 +108,6 @@ app.post("/register", (req, res) => {
   const favBeaches = req.body.favBeaches
   //check if email is registered
   knex.select('*').from('users').then((results) => {
-    //res.json(results);
     const stringified = JSON.stringify(results);
     const users = JSON.parse(stringified);
     for (const user of users) {
@@ -147,7 +146,6 @@ app.post("/register", (req, res) => {
     } else {
       res.send("Fill out all the forms!")
     }
-
   })
 });
 
@@ -155,35 +153,38 @@ app.get("/login", (req, res) => {
 
 });
 
-app.get("/api/user", (req, res) => {
-  //res.send(req.session)
-  console.log(req.session)
-  knex('users').select('first_name', 'email').where({id: req.session.user_id}).then((results) => {
-    res.send(results)
-  })
+app.get("/user/:id", (req, res) => {
+  let userId = req.params.id;
+  if (userId == req.session.user_id) {
+    knex.select('name', 'beaches.id').from('beaches').innerJoin('favorites','beach_id', 'beaches.id')
+    .innerJoin('users', 'user_id', 'users.id').where({user_id: req.session.user_id})
+    .then((results) => {
+      res.json(results)
+    }).catch((err) => console.log(err))
+  } else {
+    res.send("Not authorized")
+  }
 });
+
 
 app.post("/login", (req, res) => {
   console.log("body", req.body)
   const email = req.body.email.toLowerCase();
   const password = req.body.password;
-  if (email) {
-    knex('users').select('*').where({email: email}).returning('password').then((results) => {
-      const stringified = JSON.stringify(results);
-      const userInfo = JSON.parse(stringified);
-      if (bcrypt.compareSync(password, userInfo[0].password)) {
-        req.session.user_id = userInfo[0].id;
-        console.log('Session', req.session)
-        res.send(userInfo)
-        return;
-      } else {
-        res.send("Wrong password")
-      }
-    })
-  } else {
-    res.send("No email");
-  }
-
+  knex('users').select('*').where({email: email}).returning('password').then((results) => {
+    const stringified = JSON.stringify(results);
+    const userInfo = JSON.parse(stringified);
+    if (bcrypt.compareSync(password, userInfo[0].password)) {
+      req.session.user_id = userInfo[0].id;
+      console.log('Session', req.session)
+      res.send(userInfo)
+      return;
+    } else {
+      res.send("Wrong password")
+    }
+  }).catch((err) => {
+    res.send("Email not registered");
+  })
 });
 
 app.post("/logout", (req, res) => {
@@ -191,6 +192,13 @@ app.post("/logout", (req, res) => {
   req.session = null;
   res.send("Logged out")
   console.log("Session:", req.session)
+});
+
+app.post("/beach/delete", (req, res) => {
+  console.log(req.body)
+  knex('favorites').where({beach_id: req.body.id, user_id: req.body.userId}).del().then((res) => {
+    console.log(res)
+  })
 });
 
 
