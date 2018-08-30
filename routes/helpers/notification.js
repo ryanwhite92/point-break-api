@@ -47,17 +47,14 @@ function prepareUserNotifications(knex) {
         // Send one email if conditions are good on one of the forecast days per beach
         for (let i = 0; i < stormglass.length; i++) {
           let dailyReport = stormglass[i];
-          let notificationSent = false;
+          let timestamp = Object.keys(dailyReport)[0];
 
-          for (let timestamp of Object.keys(dailyReport)) {
-            if (dailyReport[timestamp].surfRating >= 4) {
-              notificationSent = true;
-              sendEmail(result, timestamp);
-              // sendSMS(result, timestamp);
-            }
+          if (dailyReport[timestamp].surfRating >= 4) {
+            notificationSent = true;
+            sendEmail(result, timestamp);
+            // sendSMS(result, timestamp);
+            break;
           }
-
-          if (notificationSent) break;
         }
       });
     })
