@@ -159,7 +159,6 @@ app.get("/user/:id", (req, res) => {
   }
 });
 
-
 app.post("/login", (req, res) => {
   console.log("body", req.body)
   const email = req.body.email.toLowerCase();
