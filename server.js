@@ -17,15 +17,6 @@ const knexLogger  = require('knex-logger');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const CronJob = require('cron').CronJob;
-// const session = require('express-session')
-// const cookieParser = require('cookie-parser');
-// app.use(cookieParser());
-// app.use(session({
-//   resave: false,
-//   saveUninitialized: true,
-//   secret: 'sdlfjljrowuroweu',
-//   cookie: { secure: false }
-// }));
 
 app.use(cookieSession({
   name: 'session',
