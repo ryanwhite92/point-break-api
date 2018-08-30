@@ -8,8 +8,11 @@ const darkskyApiKey = process.env.DARKSKY_KEY;
 async function getSurfData(beach) {
   const { latitude, longitude } = beach;
   const params = 'waveHeight,swellHeight,wavePeriod,windSpeed,windDirection';
+  // Set start date to previous day
+  let start = new Date();
+  start = Math.floor(start.setDate(start.getDate() - 1) / 1000);
 
-  const response = await fetch(`https://api.stormglass.io/point?lat=${latitude}&lng=${longitude}&params=${params}`, {
+  const response = await fetch(`https://api.stormglass.io/point?lat=${latitude}&lng=${longitude}&params=${params}&start=${start}`, {
     headers: {
       'Authorization': sgApiKey
     }
