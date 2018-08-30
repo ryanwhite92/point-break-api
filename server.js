@@ -17,15 +17,6 @@ const knexLogger  = require('knex-logger');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const CronJob = require('cron').CronJob;
-// const session = require('express-session')
-// const cookieParser = require('cookie-parser');
-// app.use(cookieParser());
-// app.use(session({
-//   resave: false,
-//   saveUninitialized: true,
-//   secret: 'sdlfjljrowuroweu',
-//   cookie: { secure: false }
-// }));
 
 app.use(cookieSession({
   name: 'session',
@@ -150,8 +141,9 @@ app.get("/user/:id", (req, res) => {
   let userId = req.params.id;
   if (userId == req.session.user_id) {
     knex.select('name', 'beaches.id').from('beaches').innerJoin('favorites','beach_id', 'beaches.id')
-    .innerJoin('users', 'user_id', 'users.id').where({user_id: req.session.user_id})
+    .innerJoin('users', 'user_id', 'users.id').where({user_id: userId})
     .then((results) => {
+      console.log("Got user fav beaches:", results)
       res.json(results)
     }).catch((err) => console.log(err))
   } else {
@@ -187,9 +179,49 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/beach/delete", (req, res) => {
-  console.log(req.body)
-  knex('favorites').where({beach_id: req.body.id, user_id: req.body.userId}).del().then((res) => {
-    console.log(res)
+  console.log("Req body", req.body)
+  knex('favorites').where({beach_id: req.body.id, user_id: req.body.userId}).del().then((result) => {
+    console.log("Results: ", result)
+    res.sendStatus(200)
+  })
+});
+
+app.post("/beach/add", (req, res) => {
+  const favBeaches = req.body.favBeaches
+  const userId = req.body.userId
+  if (favBeaches) {
+    favBeaches.forEach((beach) => {
+      knex('beaches').select('id').where({name: beach}).first().then((id) => {
+        const stringifiedId = JSON.stringify(id)
+        const beachId = JSON.parse(stringifiedId).id
+        knex('favorites').insert({user_id: userId, beach_id: beachId}).then(() => {
+          res.send("Added a new beach")
+          console.log("Added a fav beach.")
+        })
+      })
+    })
+  }
+});
+
+app.get("/api/user/beaches", (req, res) => {
+  knex('beaches').select('name').then((beachNames) => {
+    const beaches = JSON.parse(JSON.stringify(beachNames))
+    const b = [];
+    beaches.forEach((beach) => {
+      b.push(beach.name)
+    })
+    console.log("Beaches:", b)
+      knex.select('name').from('beaches').innerJoin('favorites','beach_id', 'beaches.id')
+      .innerJoin('users', 'user_id', 'users.id').where({user_id: req.session.user_id})
+      .then((results) => {
+        const favBeaches = JSON.parse(JSON.stringify(results))
+        const fb = []
+        favBeaches.forEach((beach) => {
+          fb.push(beach.name)
+        })
+        const filteredBeaches = b.filter((beach) => !fb.includes(beach));
+        res.send(filteredBeaches)
+      })
   })
 });
 
@@ -198,8 +230,8 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  // surfReport.updateSurfData(knex);
-  // notification.prepareUserNotifications(knex);
+  //surfReport.updateSurfData(knex);
+  //notification.prepareUserNotifications(knex);
 });
 
 
