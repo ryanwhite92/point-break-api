@@ -8,8 +8,11 @@ const darkskyApiKey = process.env.DARKSKY_KEY;
 async function getSurfData(beach) {
   const { latitude, longitude } = beach;
   const params = 'waveHeight,swellHeight,wavePeriod,windSpeed,windDirection';
+  // Set start date to previous day
+  let start = new Date();
+  start = Math.floor(start.setDate(start.getDate() - 1) / 1000);
 
-  const response = await fetch(`https://api.stormglass.io/point?lat=${latitude}&lng=${longitude}&params=${params}`, {
+  const response = await fetch(`https://api.stormglass.io/point?lat=${latitude}&lng=${longitude}&params=${params}&start=${start}`, {
     headers: {
       'Authorization': sgApiKey
     }
@@ -84,4 +87,33 @@ async function buildSurfReport(beach) {
   return weeklyReport;
 }
 
-module.exports = { buildSurfReport };
+function updateSurfData(knex) {
+
+  function updateDatabase(result, data) {
+    knex("beaches")
+      .where({ id: result.id })
+      .update({
+        stormglass: data,
+        updated_at: new Date()
+      })
+      .catch(error => console.error(error));
+  }
+
+  knex("beaches")
+    .select("*")
+    .then((results) => {
+      results.forEach((result) => {
+        buildSurfReport(result)
+          .then((data) => {
+            data = JSON.stringify(data);
+
+            updateDatabase(result, data);
+
+          })
+          .catch(error => console.error(error));
+      });
+    })
+    .catch(error => console.error(error));
+}
+
+module.exports = { updateSurfData };

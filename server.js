@@ -16,6 +16,16 @@ const knexLogger  = require('knex-logger');
 
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+const CronJob = require('cron').CronJob;
+// const session = require('express-session')
+// const cookieParser = require('cookie-parser');
+// app.use(cookieParser());
+// app.use(session({
+//   resave: false,
+//   saveUninitialized: true,
+//   secret: 'sdlfjljrowuroweu',
+//   cookie: { secure: false }
+// }));
 
 app.use(cookieSession({
   name: 'session',
@@ -25,6 +35,7 @@ app.use(cookieSession({
 
 // Loads the surfReport helper
 const surfReport = require('./routes/helpers/surfReport');
+const notification = require('./routes/helpers/notification');
 
 // Seperated Routes for each Resource
 const usersRoutes = require("./routes/users");
@@ -62,35 +73,17 @@ app.use((req, res, next) => {
   next();
 });
 
-function updateSurfData() {
-  knex("beaches")
-    .select("*")
-    .then((results) => {
-      results.forEach((result) => {
-        surfReport.buildSurfReport(result)
-          .then((data) => {
-            data = JSON.stringify(data);
-            updateDatabase(result, data);
-          })
-          .catch(error => console.error(error));
-      });
-    })
-    .catch(error => console.error(error));
-}
+// Update surf data every at 7:59am before sending out notifications
+new CronJob('00 59 07 * * *', () => {
+  console.log('Updating surf data...');
+  surfReport.updateSurfData(knex);
+}, null, true, 'America/Los_Angeles');
 
-function updateDatabase(result, data) {
-  knex("beaches")
-    .where({ id: result.id })
-    .update({
-      stormglass: data,
-      updated_at: new Date()
-    })
-    .catch(error => console.error(error));
-}
-
-// Update surf data every 1/2 day (in ms)
-//setInterval(updateSurfData, 43200000);
-
+// Send daily notifications at 8am PST
+new CronJob('00 00 08 * * *', () => {
+  console.log('Sending daily notifications...');
+  notification.prepareUserNotifications(knex);
+}, null, true, 'America/Los_Angeles');
 
 // Home page
 app.get("/", (req, res) => {
@@ -206,7 +199,8 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  //updateSurfData();
+  // surfReport.updateSurfData(knex);
+  notification.prepareUserNotifications(knex);
 });
 
 
