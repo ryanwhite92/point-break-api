@@ -189,33 +189,42 @@ app.post("/beach/delete", (req, res) => {
 app.post("/beach/add", (req, res) => {
   const favBeaches = req.body.favBeaches
   const userId = req.body.userId
-  knex.select('name', 'beaches.id').from('beaches').innerJoin('favorites','beach_id', 'beaches.id')
-    .innerJoin('users', 'user_id', 'users.id').where({user_id: userId})
-    .then((results) => {
-    const stringified = JSON.stringify(results)
-    const alreadyFav = JSON.parse(stringified)
-    for (const beach of favBeaches){
-      for (const b of alreadyFav) {
-        if (b.name === beach) {
-          res.send(`You already favorited ${b.name}`)
-          return;
-        }
-      }
-    } 
-    if (favBeaches) {
-        favBeaches.forEach((beach) => {
-          knex('beaches').select('id').where({name: beach}).first().then((id) => {
-            const stringifiedId = JSON.stringify(id)
-            const beachId = JSON.parse(stringifiedId).id
-            knex('favorites').insert({user_id: userId, beach_id: beachId}).then(() => {
-              res.send("Added a new beach")
-              console.log("Added a fav beach.")
-            })
-          })
+  if (favBeaches) {
+    favBeaches.forEach((beach) => {
+      knex('beaches').select('id').where({name: beach}).first().then((id) => {
+        const stringifiedId = JSON.stringify(id)
+        const beachId = JSON.parse(stringifiedId).id
+        knex('favorites').insert({user_id: userId, beach_id: beachId}).then(() => {
+          res.send("Added a new beach")
+          console.log("Added a fav beach.")
         })
-      }
-  }).catch((err) => console.log(err))
-})
+      })
+    })
+  }
+});
+
+app.get("/api/user/beaches", (req, res) => {
+  knex('beaches').select('name').then((beachNames) => {
+    const beaches = JSON.parse(JSON.stringify(beachNames))
+    const b = [];
+    beaches.forEach((beach) => {
+      b.push(beach.name)
+    })
+    console.log("Beaches:", b)
+      knex.select('name').from('beaches').innerJoin('favorites','beach_id', 'beaches.id')
+      .innerJoin('users', 'user_id', 'users.id').where({user_id: req.session.user_id})
+      .then((results) => {
+        const favBeaches = JSON.parse(JSON.stringify(results))
+        const fb = []
+        favBeaches.forEach((beach) => {
+          fb.push(beach.name)
+        })
+        const filteredBeaches = b.filter((beach) => !fb.includes(beach));
+        res.send(filteredBeaches)
+      })
+  })
+});
+
 
 app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
