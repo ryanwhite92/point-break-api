@@ -1,4 +1,4 @@
-const twilio  = require('twilio');
+const twilio  = require("twilio");
 const twilioNumber = process.env.TWILIO_NUMBER;
 const accountSid   = process.env.TWILIO_SID;
 const authToken    = process.env.TWILIO_AUTH_TOKEN;
@@ -6,12 +6,12 @@ const client       = new twilio(accountSid, authToken);
 
 const mailgunKey    = process.env.MAILGUN_API_KEY;
 const mailgunDomain = process.env.MAILGUN_DOMAIN;
-const mailgun = require('mailgun-js')({ apiKey: mailgunKey, domain: mailgunDomain });
+const mailgun = require("mailgun-js")({ apiKey: mailgunKey, domain: mailgunDomain });
 
 function sendSMS(phoneNumber, data) {
   client.messages.create({
     body: `Great surfing conditions at:\n${data.join('\n')}`,
-    to: `${phoneNumber}`,
+    to: `+1${phoneNumber}`,
     from: `${twilioNumber}`
   })
   .then(message => console.log(message))
@@ -20,9 +20,9 @@ function sendSMS(phoneNumber, data) {
 
 function sendEmail(email, data) {
   const message = {
-    from: 'Admin <admin@surfbuddy.com>',
+    from: "Admin <admin@surfbuddy.com>",
     to: `${email}`,
-    subject: 'Surf Update',
+    subject: "Surf Update",
     text: `Great surfing conditions at:\n${data.join('\n')}`
   };
 
@@ -42,6 +42,7 @@ function groupUsers(data) {
     if (!(result.email in obj)) {
       obj[result.email] = {
         phoneNumber: result.phone_number,
+        notificationType: result.notification_type,
         beachData: []
       };
     }
@@ -51,7 +52,7 @@ function groupUsers(data) {
   }, {});
 }
 
-// Return list of notifications based on the daily surf report at noon
+// Return list of notifications based on the daily surf report at 11AM PST
 // (change to user defined time -- stretch)
 function filterAndCheckSurfReport(data) {
   const notificationList = [];
@@ -60,6 +61,7 @@ function filterAndCheckSurfReport(data) {
     if (!(key in notificationList)) {
       notificationList[key] = {
         phoneNumber: data[key].phoneNumber,
+        notificationType: data[key].notificationType,
         beachData: []
       };
     }
@@ -67,7 +69,8 @@ function filterAndCheckSurfReport(data) {
     data[key].beachData.forEach((datum) => {
       const filteredForecast = datum.stormglass.filter((forecast) => {
         const timestamp = Object.keys(forecast)[0];
-        return new Date(Number(timestamp)).getHours() === 12;
+        const time = new Date(Number(timestamp)).getHours();
+        return time === 18;
       });
 
       filteredForecast.forEach((day) => {
@@ -87,7 +90,7 @@ function filterAndCheckSurfReport(data) {
 function sendNotifications(list) {
   for (let email in list) {
     const favoriteBeaches = [];
-    const { phoneNumber, beachData } = list[email];
+    const { phoneNumber, beachData, notificationType } = list[email];
 
     beachData.forEach((n) => {
       let { date } = n;
@@ -95,8 +98,14 @@ function sendNotifications(list) {
       const beachAndDate = `${n.beach} on ${date}`;
       favoriteBeaches.push(beachAndDate);
     });
-    sendEmail(email, favoriteBeaches);
-    // sendSMS(phoneNumber, favoriteBeaches);
+
+    if (notificationType === "email") {
+      sendEmail(email, favoriteBeaches);
+    }
+
+    if (notificationType === "text") {
+      sendSMS(phoneNumber, favoriteBeaches);
+    }
   }
 }
 
@@ -104,7 +113,7 @@ function groupUserNotifications(knex) {
   knex("beaches")
     .join("favorites", "beaches.id", "favorites.beach_id")
     .join("users", "users.id", "favorites.user_id")
-    .select("name", "stormglass", "email", "phone_number", "notifications")
+    .select("name", "stormglass", "email", "phone_number", "notifications", "notification_type")
     .then((results) => {
       return groupUsers(results);
     })
