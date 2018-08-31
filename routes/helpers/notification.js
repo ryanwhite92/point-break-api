@@ -34,6 +34,10 @@ function sendEmail(email, data) {
 function groupUsers(data) {
   return data.reduce((obj, result) => {
     const { name, stormglass } = result;
+    // If current users notifications are set to false, skip
+    if (!result.notifications) {
+      return obj;
+    }
 
     if (!(result.email in obj)) {
       obj[result.email] = {
@@ -100,7 +104,7 @@ function groupUserNotifications(knex) {
   knex("beaches")
     .join("favorites", "beaches.id", "favorites.beach_id")
     .join("users", "users.id", "favorites.user_id")
-    .select("name", "stormglass", "email", "phone_number")
+    .select("name", "stormglass", "email", "phone_number", "notifications")
     .then((results) => {
       return groupUsers(results);
     })
