@@ -6,6 +6,7 @@ exports.up = function(knex, Promise) {
     table.text('password');
     table.string('email');
     table.string('phone_number');
+    table.boolean('notifications').defaultTo(true);
   });
 };
 
