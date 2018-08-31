@@ -64,11 +64,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// Update surf data every day at 23:55 UTC
+// Update surf data every day at 23:55 PST
 new CronJob('00 55 23 * * *', () => {
   console.log('Updating surf data...');
   surfReport.updateSurfData(knex);
-}, null, true);
+}, null, true, 'America/Los_Angeles');
 
 // Send daily notifications at 8am PST
 new CronJob('00 00 08 * * *', () => {
@@ -243,8 +243,8 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  surfReport.updateSurfData(knex);
-  //notification.prepareUserNotifications(knex);
+  //surfReport.updateSurfData(knex);
+  //notification.groupUserNotifications(knex);
 });
 
 
