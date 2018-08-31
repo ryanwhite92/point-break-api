@@ -211,20 +211,33 @@ app.get("/api/user/beaches", (req, res) => {
       b.push(beach.name)
     })
     console.log("Beaches:", b)
-      knex.select('name').from('beaches').innerJoin('favorites','beach_id', 'beaches.id')
-      .innerJoin('users', 'user_id', 'users.id').where({user_id: req.session.user_id})
-      .then((results) => {
-        const favBeaches = JSON.parse(JSON.stringify(results))
-        const fb = []
-        favBeaches.forEach((beach) => {
-          fb.push(beach.name)
-        })
-        const filteredBeaches = b.filter((beach) => !fb.includes(beach));
-        res.send(filteredBeaches)
+    knex.select('name').from('beaches').innerJoin('favorites','beach_id', 'beaches.id')
+    .innerJoin('users', 'user_id', 'users.id').where({user_id: req.session.user_id})
+    .then((results) => {
+      const favBeaches = JSON.parse(JSON.stringify(results));
+      const fb = [];
+      favBeaches.forEach((beach) => {
+        fb.push(beach.name)
       })
+      const filteredBeaches = b.filter((beach) => !fb.includes(beach));
+      res.send(filteredBeaches);
+    })
   })
 });
 
+app.post("/api/user/notifications", (req, res) => {
+  if (req.body.setting === 'off') {
+    knex('users').update({ notifications: false }).where({id: req.session.user_id}).then((result) => {
+      res.send("Updated setting")
+      console.log(result)
+    })
+  } else if (req.body.setting === 'on') {
+    knex('users').update({ notifications: true }).where({id: req.session.user_id}).then((result) => {
+      res.send("Updated setting")
+      console.log(result)
+    })
+  }
+})
 
 app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
