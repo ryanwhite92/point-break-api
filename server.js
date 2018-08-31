@@ -89,6 +89,7 @@ app.post("/register", (req, res) => {
   const phoneNum = req.body.phone_number;
   const password = req.body.password;
   const hashedPW = bcrypt.hashSync(password, 10);
+  const notification = req.body.notification_type;
   const favBeaches = req.body.favBeaches
   //check if email is registered
   knex.select('*').from('users').then((results) => {
@@ -102,7 +103,7 @@ app.post("/register", (req, res) => {
     }
     //create user if all forms are filled
     if (firstName && lastName && email && phoneNum && password) {
-      knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW}).returning('*').then((results) => {
+      knex('users').insert({first_name: firstName, last_name: lastName, email: email, phone_number: phoneNum, password: hashedPW, notification_type: notification}).returning('*').then((results) => {
       console.log(results)
       const stringified = JSON.stringify(results)
       const user = JSON.parse(stringified)
@@ -234,6 +235,21 @@ app.post("/api/user/notifications", (req, res) => {
   } else if (req.body.setting === 'on') {
     knex('users').update({ notifications: true }).where({id: req.session.user_id}).then((result) => {
       res.send("Updated setting")
+      console.log(result)
+    })
+  }
+})
+
+app.post("/api/user/notificationtype", (req, res) => {
+  console.log(req.body)
+  if (req.body.setting === 'email') {
+    knex('users').update({ notification_type: 'email' }).where({id: req.session.user_id}).then((result) => {
+      res.send("Updated notification type")
+      console.log(result)
+    })
+  } else if (req.body.setting === 'text') {
+    knex('users').update({ notification_type: 'text' }).where({id: req.session.user_id}).then((result) => {
+      res.send("Updated notification type")
       console.log(result)
     })
   }
