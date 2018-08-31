@@ -7,6 +7,7 @@ exports.up = function(knex, Promise) {
     table.string('email');
     table.string('phone_number');
     table.boolean('notifications').defaultTo(true);
+    table.string('notification_type');
   });
 };
 

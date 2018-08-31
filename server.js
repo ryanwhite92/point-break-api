@@ -243,7 +243,7 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  //surfReport.updateSurfData(knex);
+  surfReport.updateSurfData(knex);
   //notification.prepareUserNotifications(knex);
 });
 
