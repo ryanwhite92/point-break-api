@@ -1,6 +1,6 @@
 "use strict";
 
-require('dotenv').config();
+// require('dotenv').config();
 
 const PORT        = process.env.PORT || 8080;
 const ENV         = process.env.ENV || "development";
@@ -78,7 +78,8 @@ new CronJob('00 00 08 * * *', () => {
 
 // Home page
 app.get("/", (req, res) => {
-  console.log(req.session)
+  console.log(req.session);
+  res.send("WELCOME TO THE SERVER");
 });
 
 app.post("/register", (req, res) => {
@@ -259,8 +260,7 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment below to update database
-  //surfReport.updateSurfData(knex);
-  //notification.groupUserNotifications(knex);
+  surfReport.updateSurfData(knex);
 });
 
 
