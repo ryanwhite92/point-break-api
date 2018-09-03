@@ -8,11 +8,8 @@ const owmApiKey = process.env.OWM_KEY;
 async function getSurfData(beach) {
   const { latitude, longitude } = beach;
   const params = 'waveHeight,swellHeight,wavePeriod,windSpeed,windDirection';
-
   const response = await fetch(`https://api.stormglass.io/point?lat=${latitude}&lng=${longitude}&params=${params}`, {
-    headers: {
-      'Authorization': sgApiKey
-    }
+    headers: { 'Authorization': sgApiKey }
   });
   const json = await response.json();
 
@@ -22,7 +19,6 @@ async function getSurfData(beach) {
 // Returns weather data from open weather map API based on input coordinates
 async function getWeatherData(beach) {
   const { latitude, longitude } = beach;
-
   const owm = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${owmApiKey}`);
   const forecast = await owm.json();
   const weatherData = forecast.list;
@@ -74,12 +70,9 @@ async function buildSurfReport(beach) {
     });
 
     threeHourForecast[timestamp].surfRating = calcSurfRating(threeHourForecast[timestamp]);
-
-    console.log(threeHourForecast);
     weeklyReport.push(threeHourForecast);
   });
 
-  console.log(weeklyReport)
   return weeklyReport;
 }
 
