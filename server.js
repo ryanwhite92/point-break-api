@@ -24,7 +24,7 @@ app.use(cookieSession({
   signed: false
 }));
 
-// Loads the surfReport helper
+// Loads the surfReport and notification helpers
 const surfReport = require('./routes/helpers/surfReport');
 const notification = require('./routes/helpers/notification');
 
@@ -51,11 +51,6 @@ app.use("/styles", sass({
 }));
 app.use(express.static(require('path').join(__dirname, 'public')));
 
-
-// Mount all resource routes
-app.use("/api/users", usersRoutes(knex));
-app.use("/api/beaches", beachRoutes(knex));
-
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', true);
   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
@@ -63,6 +58,10 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Headers", "Content-Type");
   next();
 });
+
+// Mount all resource routes
+app.use("/api/users", usersRoutes(knex));
+app.use("/api/beaches", beachRoutes(knex));
 
 // Update surf data every day at 23:55 PST
 new CronJob('00 55 23 * * *', () => {
@@ -258,9 +257,8 @@ app.post("/api/user/notificationtype", (req, res) => {
 app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
-  // Uncomment below to update database
-  //surfReport.updateSurfData(knex);
-  //notification.groupUserNotifications(knex);
+  // Uncomment to update database
+  // surfReport.updateSurfData(knex);
 });
 
 
