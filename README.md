@@ -1,14 +1,7 @@
-# Node Skeleton
+# Point Break - a Vancouver Island surfer's guide to great surfing
+Point Break is all about getting you the info you need in order to enjoy the best of Vancouver Island surfing. Point Break offers user registration, where a user may select up to 10 of their favorite Vancouver Island beaches. Users will then receive notifications via email or text, depending on their preference, telling them when the weather conditions are just right for a great day of surfing. 
 
-## Project Setup
-
-1. Create your own empty repo on GitHub
-2. Clone this repository (do not fork)
-  - Suggestion: When cloning, specify a different folder name that is relevant to your project
-3. Remove the git remote: `git remote rm origin`
-4. Add a remote for your origin: `git remote add origin <your github repo URL>`
-5. Push to the new origin: `git push -u origin master`
-6. Verify that the skeleton code now shows up in your repo on GitHub
+Point Break also offers simplified surf forecasts on their home page so you can have a quick look at what the swell and wind will be like up to six days in advance. We've included a star-rating system so that you can interpret the forecast more easily if you're new to reading these types of forecasts. 
 
 ## Getting Started
 
@@ -20,8 +13,9 @@
   - Check the migrations folder to see what gets created in the DB
 6. Run the seed: `npm run knex seed:run`
   - Check the seeds file to see what gets seeded in the DB
-7. Run the server: `npm run local`
-8. Visit `http://localhost:8080/`
+7. Run the server: `npm start`
+8. Run the front-end: [Point Break](https://github.com/hellocathleen/react-app) 
+9. Visit `http://localhost:3000`
 
 ## Dependencies
 
