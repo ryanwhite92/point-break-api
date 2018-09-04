@@ -28,7 +28,7 @@ function sendEmail(email, data) {
 
   mailgun.messages().send(message, (error, body) => {
     console.log(body);
-  })
+  });
 }
 
 function groupUsers(data) {
@@ -80,7 +80,6 @@ function filterAndCheckSurfReport(data) {
           notificationList[key].beachData.push({ date, beach: datum.name });
         }
       });
-
     });
   }
 

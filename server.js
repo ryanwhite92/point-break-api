@@ -24,11 +24,11 @@ app.use(cookieSession({
   signed: false
 }));
 
-// Loads the surfReport helper
+// Loads the surfReport and notification helpers
 const surfReport = require('./routes/helpers/surfReport');
 const notification = require('./routes/helpers/notification');
 
-// Seperated Routes for each Resource
+// Separated Routes for each Resource
 const usersRoutes = require("./routes/users");
 const beachRoutes = require("./routes/beaches");
 
@@ -51,11 +51,6 @@ app.use("/styles", sass({
 }));
 app.use(express.static(require('path').join(__dirname, 'public')));
 
-
-// Mount all resource routes
-app.use("/api/users", usersRoutes(knex));
-app.use("/api/beaches", beachRoutes(knex));
-
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', true);
   res.header("Access-Control-Allow-Origin", "http://localhost:3000");
@@ -63,6 +58,10 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Headers", "Content-Type");
   next();
 });
+
+// Mount all resource routes
+app.use("/api/users", usersRoutes(knex));
+app.use("/api/beaches", beachRoutes(knex));
 
 // Update surf data every day at 23:55 PST
 new CronJob('00 55 23 * * *', () => {
@@ -83,7 +82,6 @@ app.get("/", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  console.log("req.body:", req.body);
   const firstName = req.body.first_name;
   const lastName = req.body.last_name;
   const email = req.body.email.toLowerCase();
@@ -113,7 +111,7 @@ app.post("/register", (req, res) => {
       console.log("Session set:", req.session.user_id)
       req.session.save((err) => {
         if (!err) {
-          console.log("SAVED IT!", req.session.user_id);
+          console.log("Saved:", req.session.user_id);
         }
       })
       if (favBeaches) {
@@ -135,17 +133,12 @@ app.post("/register", (req, res) => {
   })
 });
 
-app.get("/login", (req, res) => {
-
-});
-
 app.get("/user/:id", (req, res) => {
   let userId = req.params.id;
   if (userId == req.session.user_id) {
     knex.select('name', 'beaches.id').from('beaches').innerJoin('favorites','beach_id', 'beaches.id')
     .innerJoin('users', 'user_id', 'users.id').where({user_id: userId})
     .then((results) => {
-      console.log("Got user fav beaches:", results)
       res.json(results)
     }).catch((err) => console.log(err))
   } else {
@@ -154,7 +147,6 @@ app.get("/user/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  console.log("body", req.body)
   const email = req.body.email.toLowerCase();
   const password = req.body.password;
   knex('users').select('*').where({email: email}).returning('password').then((results) => {
@@ -177,7 +169,6 @@ app.post("/logout", (req, res) => {
   req.session.user_id = null;
   req.session = null;
   res.send("Logged out")
-  console.log("Session:", req.session)
 });
 
 app.post("/beach/delete", (req, res) => {
@@ -212,7 +203,6 @@ app.get("/api/user/beaches", (req, res) => {
     beaches.forEach((beach) => {
       b.push(beach.name)
     })
-    console.log("Beaches:", b)
     knex.select('name').from('beaches').innerJoin('favorites','beach_id', 'beaches.id')
     .innerJoin('users', 'user_id', 'users.id').where({user_id: req.session.user_id})
     .then((results) => {
@@ -231,36 +221,31 @@ app.post("/api/user/notifications", (req, res) => {
   if (req.body.setting === 'off') {
     knex('users').update({ notifications: false }).where({id: req.session.user_id}).then((result) => {
       res.send("Updated setting")
-      console.log(result)
     })
   } else if (req.body.setting === 'on') {
     knex('users').update({ notifications: true }).where({id: req.session.user_id}).then((result) => {
       res.send("Updated setting")
-      console.log(result)
     })
   }
-})
+});
 
 app.post("/api/user/notificationtype", (req, res) => {
-  console.log(req.body)
   if (req.body.setting === 'email') {
     knex('users').update({ notification_type: 'email' }).where({id: req.session.user_id}).then((result) => {
       res.send("Updated notification type")
-      console.log(result)
     })
   } else if (req.body.setting === 'text') {
     knex('users').update({ notification_type: 'text' }).where({id: req.session.user_id}).then((result) => {
       res.send("Updated notification type")
-      console.log(result)
     })
   }
-})
+});
 
 app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
-  // Uncomment below to update database
-  surfReport.updateSurfData(knex);
+  // Uncomment to update database
+  // surfReport.updateSurfData(knex);
 });
 
 
