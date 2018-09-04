@@ -53,7 +53,8 @@ app.use(express.static(require('path').join(__dirname, 'public')));
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', true);
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  // res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header("Access-Control-Allow-Origin", "https://point-break-lhl.herokuapp.com");
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
   res.header("Access-Control-Allow-Headers", "Content-Type");
   next();
@@ -70,15 +71,15 @@ new CronJob('00 55 23 * * *', () => {
 }, null, true, 'America/Los_Angeles');
 
 // Send daily notifications at 8am PST
-new CronJob('00 00 08 * * *', () => {
+new CronJob('00 15 08 * * *', () => {
   console.log('Sending daily notifications...');
-  notification.prepareUserNotifications(knex);
+  notification.groupUserNotifications(knex);
 }, null, true, 'America/Los_Angeles');
 
 // Home page
 app.get("/", (req, res) => {
   console.log(req.session);
-  res.send("WELCOME TO THE SERVER");
+  res.send("POINT BREAK RESTful API");
 });
 
 app.post("/register", (req, res) => {
@@ -245,7 +246,8 @@ app.listen(PORT, () => {
   console.log("Example app listening on port " + PORT);
   console.log("Updating surf data...");
   // Uncomment to update database
-  // surfReport.updateSurfData(knex);
+  surfReport.updateSurfData(knex);
+  notification.groupUserNotifications(knex);
 });
 
 
