@@ -10,7 +10,7 @@ const mailgun = require("mailgun-js")({ apiKey: mailgunKey, domain: mailgunDomai
 
 function sendSMS(phoneNumber, data) {
   client.messages.create({
-    body: `These beaches have a surf rating of 4 or more:\n${data.join('\n')}\nSee more details at https://point-break-lhl.herokuapp.com`,
+    body: `These beaches have a surf rating of 4 or more:\n${data.join('\n')}\nSee more details at: https://point-break-lhl.herokuapp.com`,
     to: `+1${phoneNumber}`,
     from: `${twilioNumber}`
   })
@@ -23,7 +23,7 @@ function sendEmail(email, data) {
     from: "Admin <admin@surfbuddy.com>",
     to: `${email}`,
     subject: "Point Break Surf Reports Are In!",
-    text: `These beaches have a surf rating of 4 or more:\n${data.join('\n')}\nSee more details at https://point-break-lhl.herokuapp.com`
+    text: `These beaches have a surf rating of 4 or more:\n${data.join('\n')}\nSee more details at: https://point-break-lhl.herokuapp.com`
   };
 
   mailgun.messages().send(message, (error, body) => {
@@ -75,7 +75,7 @@ function filterAndCheckSurfReport(data) {
 
       filteredForecast.forEach((day) => {
         const dayKey = Object.keys(day)[0];
-        if (day[dayKey].surfRating >= 3) {
+        if (day[dayKey].surfRating >= 4) {
           const date = new Date(Number(dayKey));
           notificationList[key].beachData.push({ date, beach: datum.name });
         }
@@ -94,7 +94,7 @@ function sendNotifications(list) {
     beachData.forEach((n) => {
       let { date } = n;
       date = date.toDateString();
-      const beachAndDate = `- ${n.beach} on ${date}`;
+      const beachAndDate = `${n.beach} on ${date}`;
       favoriteBeaches.push(beachAndDate);
     });
 

@@ -247,7 +247,6 @@ app.listen(PORT, () => {
   console.log("Updating surf data...");
   // Uncomment to update database
   surfReport.updateSurfData(knex);
-  notification.groupUserNotifications(knex);
 });
 
 
