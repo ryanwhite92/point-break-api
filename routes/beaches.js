@@ -10,7 +10,6 @@ module.exports = (knex) => {
       .select("*")
       .from("beaches")
       .then((results) => {
-        res.header("Access-Control-Allow-Origin", "*");
         res.json(results);
     });
   });

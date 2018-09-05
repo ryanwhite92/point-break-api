@@ -10,7 +10,7 @@ const mailgun = require("mailgun-js")({ apiKey: mailgunKey, domain: mailgunDomai
 
 function sendSMS(phoneNumber, data) {
   client.messages.create({
-    body: `Great surfing conditions at:\n${data.join('\n')}`,
+    body: `These beaches have a surf rating of 4 or more:\n${data.join('\n')}\nSee more details at: https://point-break-lhl.herokuapp.com`,
     to: `+1${phoneNumber}`,
     from: `${twilioNumber}`
   })
@@ -22,13 +22,13 @@ function sendEmail(email, data) {
   const message = {
     from: "Admin <admin@surfbuddy.com>",
     to: `${email}`,
-    subject: "Surf Update",
-    text: `Great surfing conditions at:\n${data.join('\n')}`
+    subject: "Point Break Surf Reports Are In!",
+    text: `These beaches have a surf rating of 4 or more:\n${data.join('\n')}\nSee more details at: https://point-break-lhl.herokuapp.com`
   };
 
   mailgun.messages().send(message, (error, body) => {
     console.log(body);
-  })
+  });
 }
 
 function groupUsers(data) {
@@ -80,7 +80,6 @@ function filterAndCheckSurfReport(data) {
           notificationList[key].beachData.push({ date, beach: datum.name });
         }
       });
-
     });
   }
 
@@ -99,11 +98,11 @@ function sendNotifications(list) {
       favoriteBeaches.push(beachAndDate);
     });
 
-    if (notificationType === "email") {
+    if (notificationType === "email" && favoriteBeaches.length > 0) {
       sendEmail(email, favoriteBeaches);
     }
 
-    if (notificationType === "text") {
+    if (notificationType === "text" && favoriteBeaches.length > 0) {
       sendSMS(phoneNumber, favoriteBeaches);
     }
   }
@@ -119,6 +118,7 @@ function groupUserNotifications(knex) {
     })
     .then((userData) => {
       const notifications = filterAndCheckSurfReport(userData);
+      console.log("NOTIFICATIONS =>", notifications);
       sendNotifications(notifications);
     })
     .catch(error => console.error(error));
