@@ -94,7 +94,7 @@ function sendNotifications(list) {
     beachData.forEach((n) => {
       let { date } = n;
       date = date.toDateString();
-      const beachAndDate = `${n.beach} on ${date}`;
+      const beachAndDate = `- ${n.beach} on ${date}`;
       favoriteBeaches.push(beachAndDate);
     });
 
