@@ -3,18 +3,9 @@ Point Break is all about getting you the info you need in order to enjoy the bes
 
 Point Break's back-end server is responsible for updating surf weather information, interacting with the database, and sending notifications to users. 
 
-## Getting Started
+## Visit
 
-1. Create the `.env` by using `.env.example` as a reference: `cp .env.example .env`
-2. Update the .env file with your correct local information
-3. Install dependencies: `npm i`
-4. Run migrations: `npm run knex migrate:latest`
-  - Check the migrations folder to see what gets created in the DB
-5. Run the seed: `npm run knex seed:run`
-  - Check the seeds file to see what gets seeded in the DB
-6. Run the server: `npm start`
-7. Run the front-end: [Point Break](https://github.com/hellocathleen/react-app) 
-8. Visit `http://localhost:3000`
+We've deployed our app on Heroku! Please go to https://point-break-lhl.herokuapp.com/ to view it.
 
 ## Dependencies
 
