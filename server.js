@@ -29,7 +29,6 @@ const surfReport = require('./routes/helpers/surfReport');
 const notification = require('./routes/helpers/notification');
 
 // Separated Routes for each Resource
-const usersRoutes = require("./routes/users");
 const beachRoutes = require("./routes/beaches");
 
 // Load the logger first so all (static) HTTP requests are logged to STDOUT
@@ -60,8 +59,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Mount all resource routes
-app.use("/api/users", usersRoutes(knex));
+// Mount resource routes
 app.use("/api/beaches", beachRoutes(knex));
 
 // Update surf data every day at 23:55 PST
