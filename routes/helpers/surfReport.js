@@ -21,11 +21,10 @@ async function getWeatherData(beach) {
   const { latitude, longitude } = beach;
   const owm = await fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${latitude}&lon=${longitude}&appid=${owmApiKey}`);
   const forecast = await owm.json();
-  const weatherData = forecast.list;
-
-  return weatherData;
+  return forecast.list;
 }
 
+// Builds simplified surf rating
 function calcSurfRating(dailyReport) {
   const { waveHeight, swellHeight, wavePeriod, windSpeed, windDirection } = dailyReport;
   let surfRating = 0;
@@ -40,7 +39,7 @@ function calcSurfRating(dailyReport) {
 }
 
 // Builds weekly surf report based on first entry of each day, using the values from the
-// first index of each array in params variable above
+// first index of each array in params variable
 async function buildSurfReport(beach) {
   const weeklyReport = [];
   const weatherData = await getWeatherData(beach);
