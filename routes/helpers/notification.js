@@ -31,7 +31,8 @@ function sendEmail(email, data) {
   });
 }
 
-function groupUsers(data) {
+// Combines surf report notifications for each user
+function groupNotifications(data) {
   return data.reduce((obj, result) => {
     const { name, stormglass } = result;
     // If current users notifications are set to false, skip
@@ -52,8 +53,8 @@ function groupUsers(data) {
   }, {});
 }
 
-// Return list of notifications based on the daily surf report at 11AM PST
-// (change to user defined time -- stretch)
+// Checks surf rating at user favorited beaches to determine if beach should be
+// added to notification (based on daily surf rating at 11AM PST)
 function filterAndCheckSurfReport(data) {
   const notificationList = [];
 
@@ -86,11 +87,13 @@ function filterAndCheckSurfReport(data) {
   return notificationList;
 }
 
+// Send notification to user based on their preferred notification method
 function sendNotifications(list) {
   for (let email in list) {
     const favoriteBeaches = [];
     const { phoneNumber, beachData, notificationType } = list[email];
 
+    // Format beach info for notification
     beachData.forEach((n) => {
       let { date } = n;
       date = date.toDateString();
@@ -114,11 +117,10 @@ function groupUserNotifications(knex) {
     .join("users", "users.id", "favorites.user_id")
     .select("name", "stormglass", "email", "phone_number", "notifications", "notification_type")
     .then((results) => {
-      return groupUsers(results);
+      return groupNotifications(results);
     })
     .then((userData) => {
       const notifications = filterAndCheckSurfReport(userData);
-      console.log("NOTIFICATIONS =>", notifications);
       sendNotifications(notifications);
     })
     .catch(error => console.error(error));
