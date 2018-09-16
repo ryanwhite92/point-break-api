@@ -25,8 +25,8 @@ app.use(cookieSession({
 }));
 
 // Loads the surfReport and notification helpers
-const surfReport = require('./routes/helpers/surfReport');
-const notification = require('./routes/helpers/notification');
+const surfReport = require('./helpers/surfReport');
+const notification = require('./helpers/notification');
 
 // Separated Routes for each Resource
 const beachRoutes = require("./routes/beaches");
